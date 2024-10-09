@@ -48,7 +48,8 @@ export const userLogout = createAsyncThunk('user/logout',async (_,{rejectWithVal
     } catch (error:any) {
         return rejectWithValue({ error: 'Something went wrong' });
     }
-})
+});
+
 export const checkUserLogin = ()=>{
     try {
         const user = localStorage.getItem('user');
@@ -57,7 +58,8 @@ export const checkUserLogin = ()=>{
     } catch (err: any) {
        return;
     }
-}
+};
+
 
 const userSlice = createSlice({
     initialState,
@@ -71,31 +73,31 @@ const userSlice = createSlice({
     extraReducers:(builder) => {
         builder.addCase(userLogin.pending,(state)=>{
             state.loading=true;
-        })
+        });
         builder.addCase(userLogin.fulfilled,(state,{payload})=>{
             state.loading=false;
             state.user=payload.data;
             localStorage.setItem('user',JSON.stringify(payload.data));
 
             state.isLoggedIn = true;
-        })
+        });
         builder.addCase(userLogin.rejected,(state,{payload})=>{
             state.loading=false;
             state.error=payload as string;
-        })
+        });
         builder.addCase(userSignup.pending,(state)=>{
             state.loading=true;
-        })
+        });
         builder.addCase(userSignup.fulfilled,(state,{})=>{
             state.loading=false;
-        })
+        });
         builder.addCase(userSignup.rejected,(state,{payload})=>{
             state.loading=false;
             state.error=payload as string;
-        })
+        });
         builder.addCase(userLogout.pending,(state)=>{
             state.loading=true;
-        })
+        });
         builder.addCase(userLogout.fulfilled,(state,{payload})=>{
             state.loading=false;
             state.user={
@@ -107,11 +109,11 @@ const userSlice = createSlice({
             localStorage.removeItem('user');
             state.isLoggedIn = false;
             window.location.href = "/";
-        })
+        });
         builder.addCase(userLogout.rejected,(state,{payload})=>{
             state.loading=false;
             state.error=payload as string;
-        })
+        });
     },
 })
 
