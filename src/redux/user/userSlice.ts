@@ -9,6 +9,8 @@ const initialState:userState = {
         firstName:'',   
         lastName:'',
     },
+    villas:[],
+    payments : [],
     isLoggedIn:false,
     loading:false,
     error:""
@@ -60,6 +62,36 @@ export const checkUserLogin = ()=>{
     }
 };
 
+export const getVillas = createAsyncThunk('user/getVillas', async (_,{rejectWithValue})=>{
+    try {
+        const res = await axios.get("/api/villas");
+        return res.data;
+    } catch (error:any) {
+        return rejectWithValue({ error: 'Something went wrong' });
+    }
+});
+
+export const getPayments = createAsyncThunk('user/getPayments', async (_,{rejectWithValue})=>{
+    try {
+        const res = axios.get("/api/payments");
+        return (await res).data;
+    } catch (error) {
+        return rejectWithValue({error:'Something went wrong'});
+    }
+})
+
+export const postPayment = createAsyncThunk('user/postPayment', async (credentials: { villa_id: number, amount: number, payment_date: string, payment_month: string, payment_year: string }, { rejectWithValue }) => {
+    try {
+        const res = await axios.post("/api/payments", credentials);
+        return res.data;    
+
+    } catch (err: any) {
+        if (err.response && err.response.data) {
+            return rejectWithValue(err.response.data);
+        }
+        return rejectWithValue({ error: 'Something went wrong' });
+    }
+});
 
 const userSlice = createSlice({
     initialState,
@@ -111,6 +143,38 @@ const userSlice = createSlice({
             window.location.href = "/";
         });
         builder.addCase(userLogout.rejected,(state,{payload})=>{
+            state.loading=false;
+            state.error=payload as string;
+        });
+        builder.addCase(getVillas.pending,(state)=>{
+            state.loading=true;
+        });
+        builder.addCase(getVillas.fulfilled,(state,{payload})=>{
+            state.loading=false;
+            state.villas = payload.data;
+        });
+        builder.addCase(getVillas.rejected,(state,{payload})=>{
+            state.loading=false;
+            state.error=payload as string;
+        });
+        builder.addCase(getPayments.pending,(state)=>{
+            state.loading=true;
+        });
+        builder.addCase(getPayments.fulfilled,(state,{payload})=>{
+            state.loading=false;
+            state.payments = payload.data;
+        });
+        builder.addCase(getPayments.rejected,(state,{payload})=>{
+            state.loading=false;
+            state.error=payload as string;
+        });
+        builder.addCase(postPayment.pending,(state)=>{
+            state.loading=true;
+        });
+        builder.addCase(postPayment.fulfilled,(state,{payload})=>{
+            state.loading=false;
+        });
+        builder.addCase(postPayment.rejected,(state,{payload})=>{
             state.loading=false;
             state.error=payload as string;
         });

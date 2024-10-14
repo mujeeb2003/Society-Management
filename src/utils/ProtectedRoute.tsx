@@ -14,6 +14,5 @@ export default function ProtectedLoginRoute() {
 
     !isLoggedIn && toast({ variant: "destructive", title: "Authentication", description: `Please Login First` });
 
-    return isLoggedIn ? <Outlet/> : <Navigate to="/"/>
-    
+    return isLoggedIn ? <Outlet /> : <Navigate to="/"/>
 }

@@ -6,11 +6,20 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table"
 import { Link } from "react-router-dom"
+import { useDispatch, useSelector } from "react-redux"
+import { AppDispatch, type RootState } from "@/types"
+import { useEffect } from "react"
 
 export const description =
   "An application shell with a header and main content area. The header has a navbar, a search input and and a user nav dropdown. The user nav is toggled by a button with an avatar image. The main content area is divided into two rows. The first row has a grid of cards with statistics. The second row has a grid of cards with a table of recent transactions and a list of recent sales."
 
 export function Dashboard() {
+  const { payments, villas } = useSelector((state:RootState)=>state.user);
+  const dispatch = useDispatch<AppDispatch>();
+  useEffect(() => {
+    
+  }, [])
+  
 
 
   return (
@@ -24,10 +33,10 @@ export function Dashboard() {
               <CardTitle className="text-sm font-medium">
                 Total Payment Received 
               </CardTitle>
-              <span className="h-4 w-4 text-muted-foreground" >PKR</span>
+              <span className="h-4 w-4 text-muted-foreground">PKR</span>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">PKR 0</div>
+              <div className="text-2xl font-bold">PKR {payments.map((payment)=>payment.Payments.reduce((acc,payment)=>acc+payment.latest_payment,0)).reduce((acc,payment)=>acc+payment,0)} /-</div>
               <p className="text-xs text-muted-foreground">
                 Amount payed this month
               </p>
@@ -39,10 +48,10 @@ export function Dashboard() {
               <CardTitle className="text-sm font-medium">
                 Total Payment Pending 
               </CardTitle>
-              <span className="h-4 w-4 text-muted-foreground" >PKR</span>
+              <span className="h-4 w-4 text-muted-foreground">PKR</span>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">PKR 50,000</div>
+              <div className="text-2xl font-bold">PKR {(payments.map((payment,index)=>payment.Payments.reduce((acc,payment)=>acc + (payments[index].Payable - payment.latest_payment), 0)).reduce((acc,payment)=>acc+payment,0))} /-</div>
               <p className="text-xs text-muted-foreground">
                 Amount pending this month
               </p>
@@ -55,7 +64,7 @@ export function Dashboard() {
               <House className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">100</div>
+              <div className="text-2xl font-bold"></div>
               <p className="text-xs text-muted-foreground">
                 5 houses payment is pending
               </p>
