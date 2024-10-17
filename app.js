@@ -2,9 +2,10 @@ import express, { json } from "express";
 import cors from "cors";
 import sqlite3 from "sqlite3";
 import { fileURLToPath } from "url";
-import { dirname, join, parse } from "path";
+import { dirname, format, join } from "path";
 import { genSalt, hash, compare } from "bcrypt";
-import { all } from "axios";
+import html_to_pdf from 'html-pdf-node';
+
 const __filename = fileURLToPath(import.meta.url);
 export const __dirname = dirname(__filename);
 
@@ -155,11 +156,12 @@ app.delete("/users/:id", (req, res) => {
 });
 
 app.post("/villas", (req, res) => {
-    const { villa_number, owner_name, tenant_type } = req.body;
+    const { villa_number, owner_name, resident_name, occupancy_type, Payable } =
+    req.body;
     try {
         db.run(
-            `INSERT INTO villas (villa_number, owner_name, tenant_type) VALUES (?, ?, ?)`,
-            [villa_number, owner_name, tenant_type],
+            `INSERT INTO villas (villa_number, owner_name, resident_name, occupancy_type, Payable) VALUES (?, ?, ?, ?, ?)`,
+            [villa_number, owner_name, resident_name, occupancy_type, Payable],
             function (err) {
                 if (err) {
                     res.status(400).json({ error: err.message });
@@ -168,6 +170,38 @@ app.post("/villas", (req, res) => {
                 res.status(200).json({
                     message: "success",
                     data: { id: this.lastID },
+                });
+            }
+        );
+    } catch (error) {
+        console.log(error.message);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.patch("/villas/:id", (req, res) => {
+    const { id } = req.params;
+    const { villa_number, owner_name, resident_name, occupancy_type, Payable } =
+    req.body;
+    try {
+        db.run(
+            `UPDATE villas SET villa_number = ?, owner_name = ?, resident_name = ?, occupancy_type = ?, Payable = ? WHERE id = ?`,
+            [
+                villa_number,
+                owner_name,
+                resident_name,
+                occupancy_type,
+                Payable,
+                id,
+            ],
+            function (err) {
+                if (err) {
+                    res.status(400).json({ error: err.message });
+                    return;
+                }
+                res.status(200).json({
+                    message: "success",
+                    data: { id: id },
                 });
             }
         );
@@ -219,14 +253,17 @@ app.get("/payments", (req, res) => {
                     res.status(400).json({ error: err.message });
                     return;
                 }
-
+                
                 rows.forEach((villa) => {
-                    villa.Payments = JSON.parse(villa.Payments);                    
+                    villa.Payments = JSON.parse(villa.Payments);
                     villa.Payments.sort((a, b) => {
-                        return new Date(b.latest_payment_date) - new Date(a.latest_payment_date);
+                        return (
+                            new Date(b.latest_payment_date) -
+                            new Date(a.latest_payment_date)
+                        );
                     });
                 });
-
+                
                 res.status(200).json({
                     message: "success",
                     data: rows,
@@ -240,43 +277,117 @@ app.get("/payments", (req, res) => {
 });
 
 app.post("/payments", async (req, res) => {
-    
     try {
-        const { villa_id, amount, payment_date, payment_month, payment_year } = req.body;
+        const { villa_id, amount, payment_date, payment_month, payment_year } =
+        req.body;
         
-        db.all(`SELECT * FROM villas WHERE id = ?`, [villa_id], function (err, Villa) {
-            if (err) {
-                return res.status(400).json({ error: err.message });
-            }
-            
-            const VillaData = Villa[0]; // Assuming you expect only one result
-            
-            if (amount > VillaData.Payable) {
-                res.status(400).json({ error: "Amount exceeds the villa's payable amount" });
-                return; 
-            }
-            
-            db.run(
-                `INSERT INTO payments (villa_id, amount, payment_date, payment_month, payment_year) VALUES (?, ?, ?, ?, ?)`,
-                [villa_id, amount, payment_date, payment_month, payment_year],
-                function (err) {
-                    if (err) {
-                        res.status(400).json({ error: err.message });
-                        return;
-                    }
-                    
-                    res.status(200).json({
-                        message: "success",
-                        data: { id: this.lastID },
-                    });
+        db.all(
+            `SELECT * FROM villas WHERE id = ?`,
+            [villa_id],
+            function (err, Villa) {
+                if (err) {
+                    return res.status(400).json({ error: err.message });
                 }
-            );
-        });
-        
+                
+                const VillaData = Villa[0]; // Assuming you expect only one result
+                
+                if (amount > VillaData.Payable) {
+                    res.status(400).json({
+                        error: "Amount exceeds the villa's payable amount",
+                    });
+                    return;
+                }
+                
+                db.run(
+                    `INSERT INTO payments (villa_id, amount, payment_date, payment_month, payment_year) VALUES (?, ?, ?, ?, ?)`,
+                    [
+                        villa_id,
+                        amount,
+                        payment_date,
+                        payment_month,
+                        payment_year,
+                    ],
+                    function (err) {
+                        if (err) {
+                            res.status(400).json({ error: err.message });
+                            return;
+                        }
+                        
+                        res.status(200).json({
+                            message: "success",
+                            data: { id: this.lastID },
+                        });
+                    }
+                );
+            }
+        );
     } catch (error) {
-        res.status(500).json({error:error.message});
+        res.status(500).json({ error: error.message });
     }
 });
+
+app.get("/backupData", async (req, res) => {
+    try {
+        // Fetch all payments from the payments table
+        const payments = await new Promise((resolve, reject) => {
+            db.all("SELECT * FROM payments", (err, rows) => {
+                if (err) reject(err);
+                else resolve(rows);
+            });
+        });
+        
+        // Create HTML content
+        const htmlContent = `
+        <html>
+          <head>
+            <style>
+              table { border-collapse: collapse; width: 100%; }
+              th, td { border: 1px solid black; padding: 8px; text-align: left; }
+              th { background-color: #f2f2f2; }
+            </style>
+          </head>
+          <body>
+            <h1>Payment Backup</h1>
+            <table>
+              <thead>
+                <tr>
+                  <th>Payment ID</th>
+                  <th>Amount</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${payments.map(payment => `
+                  <tr>
+                    <td>${payment.payment_id}</td>
+                    <td>${payment.amount}</td>
+                    <td>${payment.date}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </body>
+        </html>
+      `;
+        
+        // Generate PDF from HTML
+        const options = {
+            format: 'A4',
+            margin: { top: '10mm', right: '10mm', bottom: '10mm', left: '10mm' },
+        };
+        const file = { content: htmlContent };
+        const pdfBuffer = await html_to_pdf.generatePdf(file, options);
+        
+        // Send PDF as response
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', 'attachment; filename=payment_backup.pdf');
+        res.send(pdfBuffer);
+    } catch (error) {
+        console.error('Error generating PDF:', error);
+        res.status(500).json({ error: 'An error occurred while generating the PDF' });
+    }
+});
+
 
 app.listen(port, () => {
     console.log(`Server running on port ${port}`);

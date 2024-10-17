@@ -7,8 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table"
 import { Link } from "react-router-dom"
 import { useDispatch, useSelector } from "react-redux"
-import { AppDispatch, type RootState } from "@/types"
-import { useEffect } from "react"
+import { AppDispatch, type Payment, type RootState } from "@/types"
+import { useMemo, useState } from "react"
 
 export const description =
   "An application shell with a header and main content area. The header has a navbar, a search input and and a user nav dropdown. The user nav is toggled by a button with an avatar image. The main content area is divided into two rows. The first row has a grid of cards with statistics. The second row has a grid of cards with a table of recent transactions and a list of recent sales."
@@ -16,9 +16,35 @@ export const description =
 export function Dashboard() {
   const { payments, villas } = useSelector((state:RootState)=>state.user);
   const dispatch = useDispatch<AppDispatch>();
-  useEffect(() => {
-    
-  }, [])
+  const [sortedPayments, setSortedPayments] = useState<Payment[]>([]);
+  const [pendingPayments, setpendingPayments] = useState<{ownerName:string,pendingAmount:number}[]>([]);
+
+  useMemo(() => {
+      // Find the latest payment date within each payment object
+      const latestPayments = payments.map((payment) => {
+        // Find the latest payment date within the payment object
+        const latestPaymentDate = new Date(
+          Math.max(...payment.Payments.map((p) => new Date(p.latest_payment_date).getTime()))
+        );
+        return { ...payment, latestPaymentDate };
+      });
+  
+      // Sort the payments by the latest payment date
+      const sortPayments = latestPayments.sort(
+        (a, b) => a.latestPaymentDate.getTime() - b.latestPaymentDate.getTime()
+      );
+  
+      setSortedPayments(sortPayments);
+      // console.log(JSON.stringify(sortPayments));
+
+      const pendingPayment = payments.map((payment,index)=>{
+        const pendingAmount = payment.Payments.reduce((acc,payment)=>acc + ( payments[index].Payable  - payment.latest_payment),0);
+        return {ownerName:payment.resident_name,pendingAmount:pendingAmount}
+      })
+      setpendingPayments(pendingPayment);
+
+      // console.log(JSON.stringify(pendingPayments));
+  }, [dispatch,payments])
   
 
 
@@ -64,9 +90,9 @@ export function Dashboard() {
               <House className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold"></div>
+              <div className="text-2xl font-bold">{villas.length}</div>
               <p className="text-xs text-muted-foreground">
-                5 houses payment is pending
+                Total houses
               </p>
             </CardContent>
           </Card>
@@ -110,7 +136,8 @@ export function Dashboard() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Customer</TableHead>
+                    <TableHead>Resident</TableHead>
+                    <TableHead>House No.</TableHead>
                     {/* <TableHead className="">
                       Type
                     </TableHead> */}
@@ -124,67 +151,28 @@ export function Dashboard() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  
-                  <TableRow>
-                    <TableCell className="py-5">
-                      <div className="font-medium">Liam Johnson</div>
-                    </TableCell>
-                    <TableCell className="py-5">
-                      <Badge className="text-xs" variant="outline">
-                        Paid
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="py-5">
-                      2023-06-23
-                    </TableCell>
-                    <TableCell className="text-right">$250.00</TableCell>
-                  </TableRow>
+                  {sortedPayments.map((payment)=>
+                  (
+                    <TableRow key={payment.id}>
+                      <TableCell className="py-5">
+                        <div className="font-medium">{payment.resident_name}</div>
+                      </TableCell>
+                      <TableCell className="py-5">
+                        <div className="font-medium">{payment.villa_number}</div>
+                      </TableCell>
+                      <TableCell className="py-5">
+                        <Badge className="text-xs" variant="outline">
+                          Paid
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="py-5">
+                        {payment.Payments[0].latest_payment_date}
+                      </TableCell>
+                      <TableCell className="text-right">PKR {payment.Payments[0].latest_payment}</TableCell>
+                    </TableRow>
+                  )
+                  )}
                  
-                  <TableRow>
-                    <TableCell className="py-5">
-                      <div className="font-medium">Liam Johnson</div>
-                    </TableCell>
-                    <TableCell className="py-5">
-                      <Badge className="text-xs" variant="outline">
-                        Paid
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="py-5">
-                      2023-06-23
-                    </TableCell>
-                    <TableCell className="text-right">$250.00</TableCell>
-                  </TableRow>
-                 
-                  <TableRow>
-                    <TableCell className="py-5">
-                      <div className="font-medium">Liam Johnson</div>
-                    </TableCell>
-                    <TableCell className="py-5">
-                      <Badge className="text-xs" variant="outline">
-                        Paid
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="py-5">
-                      2023-06-23
-                    </TableCell>
-                    <TableCell className="text-right">$250.00</TableCell>
-                  </TableRow>
-                 
-                  <TableRow>
-                    <TableCell className="py-5">
-                      <div className="font-medium">Liam Johnson</div>
-                    </TableCell>
-                    <TableCell className="py-5">
-                      <Badge className="text-xs" variant="outline">
-                        Paid
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="py-5">
-                      2023-06-23
-                    </TableCell>
-                    <TableCell className="text-right">$250.00</TableCell>
-                  </TableRow>
-
                 </TableBody>
               </Table>
             </CardContent>
@@ -196,81 +184,22 @@ export function Dashboard() {
               <CardDescription>Top 5 owners with most outstanding payments</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-8">
-              <div className="flex items-center gap-4">
-                <Avatar className="hidden h-9 w-9 sm:flex">
-                  <AvatarImage src="/avatars/01.png" alt="Avatar" />
-                  <AvatarFallback>OM</AvatarFallback>
-                </Avatar>
-                <div className="grid gap-1">
-                  <p className="text-sm font-medium leading-none">
-                    Olivia Martin
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    olivia.martin@email.com
-                  </p>
+              {pendingPayments.map((pendingPayment)=>
+                <div className="flex items-center gap-4" key={pendingPayment.ownerName}>
+                  <Avatar className="hidden h-9 w-9 sm:flex">
+                    <AvatarImage src="/avatars/01.png" alt="Avatar" />
+                    {/* <AvatarFallback>{pendingPayment?.ownerName?.split(' ')[0].charAt(0)+pendingPayment?.ownerName?.split(' ')[1].charAt(0)}</AvatarFallback> */}
+                  </Avatar>
+                  <div className="grid gap-1">
+                    <p className="text-sm font-medium leading-none">
+                      {pendingPayment.ownerName}
+                    </p>
+                    {/* <p className="text-sm text-muted-foreground">
+                    </p> */}
+                  </div>
+                  <div className="ml-auto font-medium">+PKR {pendingPayment.pendingAmount}</div>
                 </div>
-                <div className="ml-auto font-medium">+$1,999.00</div>
-              </div>
-              <div className="flex items-center gap-4">
-                <Avatar className="hidden h-9 w-9 sm:flex">
-                  <AvatarImage src="/avatars/02.png" alt="Avatar" />
-                  <AvatarFallback>JL</AvatarFallback>
-                </Avatar>
-                <div className="grid gap-1">
-                  <p className="text-sm font-medium leading-none">
-                    Jackson Lee
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    jackson.lee@email.com
-                  </p>
-                </div>
-                <div className="ml-auto font-medium">+$39.00</div>
-              </div>
-              <div className="flex items-center gap-4">
-                <Avatar className="hidden h-9 w-9 sm:flex">
-                  <AvatarImage src="/avatars/03.png" alt="Avatar" />
-                  <AvatarFallback>IN</AvatarFallback>
-                </Avatar>
-                <div className="grid gap-1">
-                  <p className="text-sm font-medium leading-none">
-                    Isabella Nguyen
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    isabella.nguyen@email.com
-                  </p>
-                </div>
-                <div className="ml-auto font-medium">+$299.00</div>
-              </div>
-              <div className="flex items-center gap-4">
-                <Avatar className="hidden h-9 w-9 sm:flex">
-                  <AvatarImage src="/avatars/04.png" alt="Avatar" />
-                  <AvatarFallback>WK</AvatarFallback>
-                </Avatar>
-                <div className="grid gap-1">
-                  <p className="text-sm font-medium leading-none">
-                    William Kim
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    will@email.com
-                  </p>
-                </div>
-                <div className="ml-auto font-medium">+$99.00</div>
-              </div>
-              <div className="flex items-center gap-4">
-                <Avatar className="hidden h-9 w-9 sm:flex">
-                  <AvatarImage src="/avatars/05.png" alt="Avatar" />
-                  <AvatarFallback>SD</AvatarFallback>
-                </Avatar>
-                <div className="grid gap-1">
-                  <p className="text-sm font-medium leading-none">
-                    Sofia Davis
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    sofia.davis@email.com
-                  </p>
-                </div>
-                <div className="ml-auto font-medium">+$39.00</div>
-              </div>
+              )}
             </CardContent>
           </Card>
 

@@ -14,10 +14,7 @@ const Payments: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();  // const [villas, setVillas] = useState<Villa[]>([]);
   const [filter, setFilter] = useState('');
   // const [filteredVillas, setFilteredVillas] = useState<Villa[]>([]);
-  
-  useEffect(() => {
-    dispatch(getPayments());
-  }, []);
+
 
   const filteredData = payments.filter(payments => 
     payments.villa_number.toLowerCase().includes(filter.toLowerCase()) ||

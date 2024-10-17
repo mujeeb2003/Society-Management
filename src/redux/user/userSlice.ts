@@ -1,5 +1,5 @@
-import {createAsyncThunk, createSlice} from "@reduxjs/toolkit";
-import type { userState } from "@/types";
+import {createAsyncThunk, createSlice, isRejectedWithValue} from "@reduxjs/toolkit";
+import type { userState, Villas } from "@/types";
 import axios from "axios";
 
 const initialState:userState = {
@@ -93,6 +93,35 @@ export const postPayment = createAsyncThunk('user/postPayment', async (credentia
     }
 });
 
+export const postVilla  = createAsyncThunk('user/postVilla', async(credentials: {villa_number:string,owner_name:string,resident_name:string,occupancy_type:string,Payable:number},{rejectWithValue})=>{
+    try {
+        const res = await axios.post("/api/villas", credentials)
+        return res.data;
+    } catch (error) {
+        return rejectWithValue({error:'Something went wrong'});
+    }
+
+})
+
+export const editVilla  = createAsyncThunk('user/editVilla', async(credentials: Villas,{rejectWithValue})=>{
+    try {
+        const res = await axios.patch(`/api/villas/${credentials.id}`, credentials);
+        return res.data;
+    } catch (error) {
+        return rejectWithValue({error:'Something went wrong'});
+    }
+
+})
+
+export const backupDatabase = createAsyncThunk('user/backupDatabase',async(_,{rejectWithValue})=>{
+    try {
+        const res = await axios.get('/api/backupData');
+        return res.data;
+    } catch (error) {
+        return rejectWithValue({error:'Something went wrong'});
+    }
+});
+
 const userSlice = createSlice({
     initialState,
     name: `user`,
@@ -175,6 +204,37 @@ const userSlice = createSlice({
             state.loading=false;
         });
         builder.addCase(postPayment.rejected,(state,{payload})=>{
+            state.loading=false;
+            state.error=payload as string;
+        });
+        builder.addCase(postVilla.pending,(state)=>{
+            state.loading=true;
+        });
+        builder.addCase(postVilla.fulfilled,(state,{payload})=>{
+            state.loading=false;
+            // state.villas.push(payload.data);
+        });
+        builder.addCase(postVilla.rejected,(state,{payload})=>{
+            state.loading=false;
+            state.error=payload as string;
+        });
+        builder.addCase(editVilla.pending,(state)=>{
+            state.loading=true;
+        });
+        builder.addCase(editVilla.fulfilled,(state,{payload})=>{
+            state.loading=false;
+        });
+        builder.addCase(editVilla.rejected,(state,{payload})=>{
+            state.loading=false;
+            state.error=payload as string;
+        });
+        builder.addCase(backupDatabase.pending,(state)=>{
+            state.loading=true;
+        });
+        builder.addCase(backupDatabase.fulfilled,(state,{payload})=>{
+            state.loading=false;
+        });
+        builder.addCase(backupDatabase.rejected,(state,{payload})=>{
             state.loading=false;
             state.error=payload as string;
         });

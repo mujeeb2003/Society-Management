@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/select";
 import { useDispatch } from "react-redux";
 import { getPayments, postPayment } from "@/redux/user/userSlice";
+import { useToast } from "@/hooks/use-toast";
 
 interface AddPaymentDialogProps {
     villaId: number;
@@ -51,6 +52,9 @@ const AddPaymentDialog: React.FC<AddPaymentDialogProps> = ({
     }>({ amount: 0, paymentMonth: "", paymentYear: "" });
     const dispatch = useDispatch<AppDispatch>();
 
+    const [Open, setOpen] = useState(false);
+    const {toast} = useToast();
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         const res = await dispatch(
@@ -65,13 +69,18 @@ const AddPaymentDialog: React.FC<AddPaymentDialogProps> = ({
         if (res.data.id) {
             dispatch(getPayments());
             setformData({ amount: 0, paymentMonth: "", paymentYear: "" });
+            toast({title:"Updated successfully",description:"Payment added successfully"});
         }
+        else{
+            toast({title:"Error",description:"Payment could not be added"});
+        }
+        setOpen(false);
     };
 
     return (
-        <Dialog >
+        <Dialog open={Open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button variant="default">Add Payment</Button>
+                <Button variant="default" onClick={()=>setOpen(true)}>Add Payment</Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px] bg-foreground" >
                 <DialogHeader>
