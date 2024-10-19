@@ -1,6 +1,6 @@
 // import Link from "next/link"
 import {  ArrowUpRight, House} from "lucide-react"
-import { Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar"
+import { Avatar, AvatarImage} from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -20,22 +20,19 @@ export function Dashboard() {
   const [pendingPayments, setpendingPayments] = useState<{ownerName:string,pendingAmount:number}[]>([]);
 
   useMemo(() => {
-      // Find the latest payment date within each payment object
       const latestPayments = payments.map((payment) => {
-        // Find the latest payment date within the payment object
+
         const latestPaymentDate = new Date(
           Math.max(...payment.Payments.map((p) => new Date(p.latest_payment_date).getTime()))
         );
         return { ...payment, latestPaymentDate };
       });
   
-      // Sort the payments by the latest payment date
       const sortPayments = latestPayments.sort(
         (a, b) => a.latestPaymentDate.getTime() - b.latestPaymentDate.getTime()
       );
   
       setSortedPayments(sortPayments);
-      // console.log(JSON.stringify(sortPayments));
 
       const pendingPayment = payments.map((payment,index)=>{
         const pendingAmount = payment.Payments.reduce((acc,payment)=>acc + ( payments[index].Payable  - payment.latest_payment),0);
@@ -43,8 +40,7 @@ export function Dashboard() {
       })
       setpendingPayments(pendingPayment);
 
-      // console.log(JSON.stringify(pendingPayments));
-  }, [dispatch,payments])
+  }, [dispatch , payments])
   
 
 

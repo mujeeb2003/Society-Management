@@ -1,45 +1,47 @@
-import { CircleUser,  Menu, Package2, Search, Activity} from "lucide-react"
+import { CircleUser,  Menu, Search, Activity} from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger} from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
-import { Link } from "react-router-dom"
+import { Link, useLocation } from "react-router-dom"
 import { useDispatch } from "react-redux"
 import { AppDispatch } from "@/types"
 import { userLogout } from "@/redux/user/userSlice"
 function Navbar() {
   const dispatch = useDispatch<AppDispatch>();
+   const location = useLocation();
+  const isActive = (path:string) => location.pathname === path;
   return (
     <header className="sticky top-0 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
     <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
       <Link
         to="/home"
-        className="flex items-center gap-2 text-lg font-semibold md:text-base text-white"
+        className={`flex items-center gap-2 text-lg font-semibold md:text-base text-white`}
       >
         <Activity className="h-6 w-6" />
         {/* <span className="sr-only"></span> */}
       </Link>
       <Link
         to="/home"
-        className="text-foreground transition-colors hover:text-foreground"
+        className={`${isActive('/home') ? "text-foreground" : "text-muted-foreground"} transition-colors hover:text-foreground`}
       >
         Dashboard
       </Link>
       <Link
         to="/home/payments"
-        className="text-muted-foreground transition-colors hover:text-foreground"
+        className={`${isActive('/home/payments') ? "text-foreground" : "text-muted-foreground"} transition-colors hover:text-foreground`}
       >
         Payments
       </Link>
       <Link
         to="/home/villas"
-        className="text-muted-foreground transition-colors hover:text-foreground"
+        className={`${isActive('/home/villas') ? "text-foreground" : "text-muted-foreground"} transition-colors hover:text-foreground`}
       >
         Villas
       </Link>
       <Link
         to="/home/settings"
-        className="text-muted-foreground transition-colors hover:text-foreground"
+        className={`${isActive('/home/settings') ? "text-foreground" : "text-muted-foreground"} transition-colors hover:text-foreground`}
       >
         Settings
       </Link>

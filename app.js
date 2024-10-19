@@ -1,10 +1,10 @@
-import express, { json } from "express";
+import express, { json, text } from "express";
 import cors from "cors";
 import sqlite3 from "sqlite3";
 import { fileURLToPath } from "url";
 import { dirname, format, join } from "path";
 import { genSalt, hash, compare } from "bcrypt";
-import html_to_pdf from 'html-pdf-node';
+import PDFDocument from 'pdfkit';
 
 const __filename = fileURLToPath(import.meta.url);
 export const __dirname = dirname(__filename);
@@ -133,25 +133,6 @@ app.get("/logout", async (req, res) => {
             message: "error",
             error: error.message,
         });
-    }
-});
-
-app.delete("/users/:id", (req, res) => {
-    const { id } = req.params;
-    try {
-        db.run("DELETE FROM users WHERE id=?", [id], function (err) {
-            if (err) {
-                res.status(400).json({ error: err.message });
-                return;
-            }
-            res.status(200).json({
-                message: "success",
-                data: { id: id },
-            });
-        });
-    } catch (error) {
-        console.log(error.message);
-        res.status(500).json({ error: error.message });
     }
 });
 
@@ -326,68 +307,89 @@ app.post("/payments", async (req, res) => {
     }
 });
 
-app.get("/backupData", async (req, res) => {
-    try {
-        // Fetch all payments from the payments table
-        const payments = await new Promise((resolve, reject) => {
-            db.all("SELECT * FROM payments", (err, rows) => {
-                if (err) reject(err);
-                else resolve(rows);
-            });
-        });
-        
-        // Create HTML content
-        const htmlContent = `
-        <html>
-          <head>
-            <style>
-              table { border-collapse: collapse; width: 100%; }
-              th, td { border: 1px solid black; padding: 8px; text-align: left; }
-              th { background-color: #f2f2f2; }
-            </style>
-          </head>
-          <body>
-            <h1>Payment Backup</h1>
-            <table>
-              <thead>
-                <tr>
-                  <th>Payment ID</th>
-                  <th>Amount</th>
-                  <th>Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${payments.map(payment => `
-                  <tr>
-                    <td>${payment.payment_id}</td>
-                    <td>${payment.amount}</td>
-                    <td>${payment.date}</td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
-          </body>
-        </html>
-      `;
-        
-        // Generate PDF from HTML
-        const options = {
-            format: 'A4',
-            margin: { top: '10mm', right: '10mm', bottom: '10mm', left: '10mm' },
-        };
-        const file = { content: htmlContent };
-        const pdfBuffer = await html_to_pdf.generatePdf(file, options);
-        
-        // Send PDF as response
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', 'attachment; filename=payment_backup.pdf');
-        res.send(pdfBuffer);
-    } catch (error) {
-        console.error('Error generating PDF:', error);
-        res.status(500).json({ error: 'An error occurred while generating the PDF' });
-    }
-});
+app.get('/backupData', (req, res) => {
+    db.all(`
+        SELECT 
+            p.id AS payment_id, 
+            p.villa_id, 
+            p.amount, 
+            p.payment_date, 
+            v.villa_number, 
+            v.owner_name, 
+            v.resident_name,
+            v.Payable
+        FROM payments p
+        JOIN villas v ON p.villa_id = v.id
+    `, [], (err, payments) => {
+        if (err) {
+            console.error('Error fetching payments:', err);
+            return res.status(500).json({ error: 'An error occurred while fetching payments', details: err.message });
+        }
 
+        console.log(`Fetched ${payments.length} payments from database`);
+        try {
+            // Create a new PDF document
+            const doc = new PDFDocument({ margin: 30, size: 'A4' });
+
+            // Set response headers for PDF download
+            res.setHeader('Content-Type', 'application/pdf');
+            res.setHeader('Content-Disposition', 'attachment; filename=payments.pdf');
+
+            // Pipe the PDF document to the response
+            doc.pipe(res);
+
+            // Add content to the PDF
+            doc.fontSize(16).text('Payments Report', { align: 'center' });
+            doc.fontSize(10).text(`Date: ${new Date().toLocaleDateString()}`, { align: 'right' });
+            doc.moveDown(1);
+
+            // Create a table
+            const table = {
+                headers: ['Payment ID', 'Villa No', 'Owner', 'Resident', 'Amount Paid', 'Pending Amount', 'Date'],
+                rows: payments.map(payment => [
+                    payment.payment_id,
+                    payment.villa_number,
+                    payment.owner_name,
+                    payment.resident_name,
+                    payment.amount,
+                    payment.Payable - payment.amount | 0,
+                    payment.payment_date
+                ])
+            };
+
+            // Draw table headers
+            const columnWidth = doc.page.width / table.headers.length - 10;
+            let yPosition = doc.y;
+            table.headers.forEach((header, i) => {
+                doc.fontSize(12).text(header, 30 + (i * columnWidth), yPosition, { width: columnWidth, align: 'center' });
+                doc.rect(30 + (i * columnWidth), yPosition, columnWidth, 20);
+            });
+            doc.moveDown(1);
+
+            // Draw table rows
+            table.rows.forEach(row => {
+                yPosition = doc.y;
+                row.forEach((cell, i) => {
+                    doc.fontSize(10).text(cell ? cell.toString() : '', 30 + (i * columnWidth), yPosition, { width: columnWidth, align: 'center' });
+                    doc.rect(30 + (i * columnWidth), yPosition, columnWidth, 20);
+                });
+                doc.moveDown(1);
+            });
+
+
+            // Finalize the PDF and end the stream
+            doc.end();
+
+        } catch (error) {
+            console.error('Error generating PDF:', error);
+            res.status(500).json({ 
+                error: 'An error occurred while generating the PDF',
+                details: error.message,
+                stack: error.stack
+            });
+        }
+    });
+});
 
 app.listen(port, () => {
     console.log(`Server running on port ${port}`);

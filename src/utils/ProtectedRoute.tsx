@@ -9,7 +9,8 @@ export default function ProtectedLoginRoute() {
     const dispatch = useDispatch<AppDispatch>();
     const { toast } = useToast();
 
-    const res = checkUserLogin();
+    const res = dispatch(checkUserLogin());
+    console.log(res);
     res && dispatch(updateUser(res));
 
     !isLoggedIn && toast({ variant: "destructive", title: "Authentication", description: `Please Login First` });

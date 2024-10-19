@@ -18,7 +18,7 @@ function App() {
     useEffect(() => {
         dispatch(getPayments());
         dispatch(getVillas());
-    }, [dispatch]);
+    }, []);
 
     return (
         <>

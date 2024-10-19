@@ -7,7 +7,7 @@ import {
     DialogFooter,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { AppDispatch } from "@/types";
+import { AppDispatch, type RootState } from "@/types";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,12 +20,19 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { getPayments, postPayment } from "@/redux/user/userSlice";
 import { useToast } from "@/hooks/use-toast";
+import PaymentReceipt from "../../components/PaymentReceipt";
 
 interface AddPaymentDialogProps {
     villaId: number;
+}
+
+interface FormData {
+    amount: number;
+    paymentMonth: string;
+    paymentYear: string;
 }
 
 const AddPaymentDialog: React.FC<AddPaymentDialogProps> = ({
@@ -45,15 +52,13 @@ const AddPaymentDialog: React.FC<AddPaymentDialogProps> = ({
         "November",
         "December",
     ];
-    const [formData, setformData] = useState<{
-        amount: number;
-        paymentMonth: string;
-        paymentYear: string;
-    }>({ amount: 0, paymentMonth: "", paymentYear: "" });
+    const [formData, setFormData] = useState<FormData>({ amount: 0, paymentMonth: "", paymentYear: "" });
+    const { payments } = useSelector((state:RootState) => state.user);
     const dispatch = useDispatch<AppDispatch>();
 
-    const [Open, setOpen] = useState(false);
-    const {toast} = useToast();
+    const [open, setOpen] = useState(false);
+    const [showReceipt, setShowReceipt] = useState(false);
+    const { toast } = useToast();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -68,17 +73,18 @@ const AddPaymentDialog: React.FC<AddPaymentDialogProps> = ({
         ).unwrap();
         if (res.data.id) {
             dispatch(getPayments());
-            setformData({ amount: 0, paymentMonth: "", paymentYear: "" });
+            console.log(payments.filter((payment)=>payment.id === villaId)[0]);
             toast({title:"Updated successfully",description:"Payment added successfully"});
+            setShowReceipt(true);
         }
         else{
             toast({title:"Error",description:"Payment could not be added"});
+            setShowReceipt(false);
         }
-        setOpen(false);
     };
 
     return (
-        <Dialog open={Open} onOpenChange={setOpen}>
+        <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
                 <Button variant="default" onClick={()=>setOpen(true)}>Add Payment</Button>
             </DialogTrigger>
@@ -101,8 +107,9 @@ const AddPaymentDialog: React.FC<AddPaymentDialogProps> = ({
                                 id="amount"
                                 type="number"
                                 value={formData.amount || 0}
+                                min={1000}
                                 onChange={(e) => {
-                                    setformData({
+                                    setFormData({
                                         ...formData,
                                         amount: parseInt(e.target.value),
                                     });
@@ -117,7 +124,7 @@ const AddPaymentDialog: React.FC<AddPaymentDialogProps> = ({
                             </Label>
                             <Select
                                 onValueChange={(e) =>
-                                    setformData({
+                                    setFormData({
                                         ...formData,
                                         paymentMonth: e,
                                     })
@@ -154,9 +161,9 @@ const AddPaymentDialog: React.FC<AddPaymentDialogProps> = ({
                             <Input
                                 id="year"
                                 type="number"
-                                value={formData.paymentYear || "0000"}
+                                value={formData.paymentYear || ""}
                                 onChange={(e) =>
-                                    setformData({
+                                    setFormData({
                                         ...formData,
                                         paymentYear: e.target.value,
                                     })
@@ -170,6 +177,13 @@ const AddPaymentDialog: React.FC<AddPaymentDialogProps> = ({
                         <Button type="submit">Add Payment</Button>
                     </DialogFooter>
                 </form>
+                {showReceipt && (
+                    <div className="mt-4">
+                        {payments.filter((payment)=>payment.id === villaId).map((payment)=>(
+                            <PaymentReceipt paymentData={{amount:formData.amount,resident_name:payment.resident_name,paymentMonth:formData.paymentMonth,paymentYear:formData.paymentYear,villa_number:payment.villa_number}} />
+                        ))}
+                    </div>
+                )}
             </DialogContent>
         </Dialog>
     );

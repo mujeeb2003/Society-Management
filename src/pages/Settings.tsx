@@ -16,29 +16,30 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User, Lock, Database } from "lucide-react";
 import { backupDatabase } from "@/redux/user/userSlice";
-import { useDispatch } from "react-redux";
-import { AppDispatch } from "@/types";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, type RootState } from "@/types";
 
 export default function SettingsPage() {
     const dispatch = useDispatch<AppDispatch>();
-
-    const [user, setUser] = useState({
-        name: "John Doe",
-        email: "john.doe@example.com",
-        bio: "I'm a software developer passionate about creating amazing user experiences.",
-        avatar: "/placeholder-avatar.jpg",
-    });
+    const {user} = useSelector((state:RootState) => state.user);
+    // console.log(JSON.stringify(user,null,4))
+    // const [user, setUser] = useState({
+    //     name: "John Doe",
+    //     email: "john.doe@example.com",
+    //     bio: "I'm a software developer passionate about creating amazing user experiences.",
+    //     avatar: "/placeholder-avatar.jpg",
+    // });
     const { toast } = useToast();
 
-    const handleInputChange = (
-        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-    ) => {
-        const { name, value } = e.target;
-        setUser((prevUser) => ({
-            ...prevUser,
-            [name]: value,
-        }));
-    };
+    // const handleInputChange = (
+    //     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    // ) => {
+    //     const { name, value } = e.target;
+    //     setUser((prevUser) => ({
+    //         ...prevUser,
+    //         [name]: value,
+    //     }));
+    // };
 
     const handleSave = () => {
         // Here you would typically make an API call to save the user's settings
@@ -51,36 +52,19 @@ export default function SettingsPage() {
 
     const handleBackupDatabase = async () => {
         try {
-            // Here you would make an API call to trigger the database backup
-            // For demonstration, we'll use a setTimeout to simulate an API call
-            const res = await dispatch(backupDatabase()).unwrap();
-
-            if (!res || !res.data) {
-                throw new Error("No data received from the server");
-            }
-
-            const blob = new Blob([res.data], { type: "application/pdf" });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.style.display = "none";
-            a.href = url;
-            a.download = "payment_backup.pdf";
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(url);
-
+            await dispatch(backupDatabase());
             toast({
-                title: "Database Backup",
-                description: "Database backup has been initiated successfully.",
+                title: "Database backup initiated",
+                description: "Your database backup has been initiated successfully.",
             });
-        } catch (error) {
+        } catch (err) {
             toast({
-                title: "Backup Failed",
-                description:
-                    "There was an error initiating the database backup.",
+                title: "Error",
+                description: "An error occurred while initiating the database backup.",
                 variant: "destructive",
             });
         }
+
     };
 
     return (
@@ -113,22 +97,31 @@ export default function SettingsPage() {
                             <div className="flex items-center space-x-4">
                                 <Avatar className="w-20 h-20">
                                     <AvatarImage
-                                        src={user.avatar}
-                                        alt={user.name}
+                                        // src={user.avatar}
+                                        alt={user.firstName}
                                     />
                                     <AvatarFallback>
-                                        {user.name.charAt(0)}
+                                        {/* {user.firstName.charAt(0)} */}
                                     </AvatarFallback>
                                 </Avatar>
                                 <Button variant="outline">Change Avatar</Button>
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="name">Name</Label>
+                                <Label htmlFor="name">First Name</Label>
                                 <Input
                                     id="name"
                                     name="name"
-                                    value={user.name}
-                                    onChange={handleInputChange}
+                                    value={user.firstName}
+                                    // onChange={handleInputChange}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="name">Last Name</Label>
+                                <Input
+                                    id="name"
+                                    name="name"
+                                    value={user.lastName}
+                                    // onChange={handleInputChange}
                                 />
                             </div>
                             <div className="space-y-2">
@@ -138,17 +131,7 @@ export default function SettingsPage() {
                                     name="email"
                                     type="email"
                                     value={user.email}
-                                    onChange={handleInputChange}
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="bio">Bio</Label>
-                                <Textarea
-                                    id="bio"
-                                    name="bio"
-                                    value={user.bio}
-                                    onChange={handleInputChange}
-                                    rows={4}
+                                    // onChange={handleInputChange}
                                 />
                             </div>
                         </CardContent>
