@@ -16,7 +16,6 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import { format } from 'date-fns';
-import Payments from "../Payments";
 
 const ViewHistoryDialog = ({ payments }: { payments: Payment }) => {
 

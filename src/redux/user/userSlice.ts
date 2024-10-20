@@ -251,7 +251,7 @@ const userSlice = createSlice({
         builder.addCase(userLogout.pending, (state) => {
             state.loading = true;
         });
-        builder.addCase(userLogout.fulfilled, (state, { payload }) => {
+        builder.addCase(userLogout.fulfilled, (state, { }) => {
             state.loading = false;
             state.user = {
                 id: 0,
@@ -292,7 +292,7 @@ const userSlice = createSlice({
         builder.addCase(postPayment.pending, (state) => {
             state.loading = true;
         });
-        builder.addCase(postPayment.fulfilled, (state, { payload }) => {
+        builder.addCase(postPayment.fulfilled, (state) => {
             state.loading = false;
         });
         builder.addCase(postPayment.rejected, (state, { payload }) => {
@@ -302,7 +302,7 @@ const userSlice = createSlice({
         builder.addCase(postVilla.pending, (state) => {
             state.loading = true;
         });
-        builder.addCase(postVilla.fulfilled, (state, { payload }) => {
+        builder.addCase(postVilla.fulfilled, (state, { }) => {
             state.loading = false;
             // state.villas.push(payload.data);
         });
@@ -313,7 +313,7 @@ const userSlice = createSlice({
         builder.addCase(editVilla.pending, (state) => {
             state.loading = true;
         });
-        builder.addCase(editVilla.fulfilled, (state, { payload }) => {
+        builder.addCase(editVilla.fulfilled, (state) => {
             state.loading = false;
         });
         builder.addCase(editVilla.rejected, (state, { payload }) => {
@@ -323,7 +323,7 @@ const userSlice = createSlice({
         builder.addCase(backupDatabase.pending, (state) => {
             state.loading = true;
         });
-        builder.addCase(backupDatabase.fulfilled, (state, { payload }) => {
+        builder.addCase(backupDatabase.fulfilled, (state) => {
             state.loading = false;
         });
         builder.addCase(backupDatabase.rejected, (state, { payload }) => {

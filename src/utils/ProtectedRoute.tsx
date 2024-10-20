@@ -1,6 +1,6 @@
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import { Navigate, Outlet } from "react-router-dom";
-import { RootState, type User } from "@/types";
+import { RootState } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 
 export default function ProtectedLoginRoute() {

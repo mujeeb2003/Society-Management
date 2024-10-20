@@ -3,7 +3,6 @@ import { LoginForm } from "./pages/LoginForm";
 import { SignupForm } from "./pages/SignupForm";
 import { Toaster } from "@/components/ui/toaster";
 import { Dashboard } from "./pages/Dashboard";
-import ProtectedLoginRoute from "./utils/ProtectedRoute";
 import Navbar from "./pages/Navbar";
 import Payments from "./pages/Payments";
 import Villas from "./pages/Villas";

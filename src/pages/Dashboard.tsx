@@ -6,8 +6,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table"
 import { Link } from "react-router-dom"
-import { useDispatch, useSelector } from "react-redux"
-import { AppDispatch, type Payment, type RootState } from "@/types"
+import { useSelector } from "react-redux"
+import { type Payment, type RootState } from "@/types"
 import { useMemo, useState } from "react"
 
 export const description =
@@ -15,7 +15,6 @@ export const description =
 
 export function Dashboard() {
   const { payments, villas } = useSelector((state:RootState)=>state.user);
-  const dispatch = useDispatch<AppDispatch>();
   const [sortedPayments, setSortedPayments] = useState<Payment[]>([]);
   const [pendingPayments, setpendingPayments] = useState<{ownerName:string,pendingAmount:number}[]>([]);
 

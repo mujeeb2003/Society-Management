@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
-import { useDispatch, useSelector } from 'react-redux';
-import { AppDispatch, type RootState } from '@/types';
-import { getPayments } from '@/redux/user/userSlice';
+import { useSelector } from 'react-redux';
+import { type RootState } from '@/types';
 import { format } from 'date-fns';
 import ViewHistoryDialog from './dialogs/ViewHistoryDialog';
 import AddPaymentDialog from './dialogs/AddPaymentDialog';

@@ -17,7 +17,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User, Lock, Database } from "lucide-react";
 import { backupDatabase, updateUserInfo, changePassword } from "@/redux/user/userSlice";
 import { AppDispatch, type RootState } from "@/types";
-import axios from "axios";
 
 export default function SettingsPage() {
     const dispatch = useDispatch<AppDispatch>();

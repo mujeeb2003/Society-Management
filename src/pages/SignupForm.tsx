@@ -5,9 +5,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useState } from "react"
 import { useToast } from "@/hooks/use-toast"
-import { useSelector, useDispatch} from "react-redux";
-import { AppDispatch, type RootState } from "@/types"
-import { userLogin, userSignup } from "@/redux/user/userSlice"
+import { useDispatch} from "react-redux";
+import { AppDispatch } from "@/types"
+import { userSignup } from "@/redux/user/userSlice"
 
 export const description =
   "A sign up form with first name, last name, email and password inside a card. There's an option to sign up with GitHub and a link to login if you already have an account"
