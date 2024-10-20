@@ -3,6 +3,9 @@
 ## Overview
 The Society Management App is designed to help society heads manage monthly payments and house details efficiently. This application aims to streamline the administrative tasks involved in managing a society.
 
+![Society Management App](image.png)
+
+
 ## Features
 - **User-Friendly Dashboard**: A comprehensive dashboard that shows analytics and important information.
 - **Monthly Payments Management**: Track and manage monthly payments from residents.
