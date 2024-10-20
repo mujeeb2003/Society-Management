@@ -40,7 +40,7 @@ export function Dashboard() {
       })
       setpendingPayments(pendingPayment);
 
-  }, [dispatch , payments])
+  }, [payments])
   
 
 

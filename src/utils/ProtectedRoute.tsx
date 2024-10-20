@@ -1,19 +1,19 @@
-import {  useDispatch, useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { Navigate, Outlet } from "react-router-dom";
-import {  AppDispatch, RootState } from "@/types";
-import { useToast } from "@/hooks/use-toast"
-import { checkUserLogin, updateUser } from "@/redux/user/userSlice";
+import { RootState, type User } from "@/types";
+import { useToast } from "@/hooks/use-toast";
 
 export default function ProtectedLoginRoute() {
-    const { isLoggedIn } = useSelector((state:RootState)=>state.user);
-    const dispatch = useDispatch<AppDispatch>();
+    const { user } = useSelector((state: RootState) => state.user);
     const { toast } = useToast();
+    const isLogged = user.id !== 0;
 
-    const res = dispatch(checkUserLogin());
-    console.log(res);
-    res && dispatch(updateUser(res));
+    !isLogged &&
+        toast({
+            variant: "destructive",
+            title: "Authentication",
+            description: `Please Login First`,
+        });
 
-    !isLoggedIn && toast({ variant: "destructive", title: "Authentication", description: `Please Login First` });
-
-    return isLoggedIn ? <Outlet /> : <Navigate to="/"/>
+    return isLogged ? <Outlet /> : <Navigate to="/" />;
 }

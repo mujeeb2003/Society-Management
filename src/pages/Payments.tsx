@@ -11,7 +11,6 @@ import AddPaymentDialog from './dialogs/AddPaymentDialog';
 
 const Payments: React.FC = () => {
   const { payments } = useSelector((state:RootState)=>state.user);
-  const dispatch = useDispatch<AppDispatch>();  // const [villas, setVillas] = useState<Villa[]>([]);
   const [filter, setFilter] = useState('');
   // const [filteredVillas, setFilteredVillas] = useState<Villa[]>([]);
 

@@ -1,50 +1,56 @@
-# React + TypeScript + Vite
+# Society Management App
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Overview
+The Society Management App is designed to help society heads manage monthly payments and house details efficiently. This application aims to streamline the administrative tasks involved in managing a society.
 
-Currently, two official plugins are available:
+## Features
+- **User-Friendly Dashboard**: A comprehensive dashboard that shows analytics and important information.
+- **Monthly Payments Management**: Track and manage monthly payments from residents.
+  - **Payment History**: View the history of each house, including all previous payments and total outstanding payments.
+  - **Receipt Download**: Download a receipt for each payment added.
+- **House Details Management**: Maintain detailed records of each house in the society.
+- **Resident Management**: Add, update, and remove resident information with ease.
+- **Event Management**: Organize and manage society events and meetings.
+- **Document Storage**: Securely store and access important documents related to the society.
+- **Data Security**: Ensure data security with robust authentication and secure data storage practices.
+- **Settings**: Update user information such as first name, last name, email, and password.
+  - **PDF Export**: Option to get a PDF of all payments to date.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Technology Stack
+- **Frontend**: Built using Shadcn UI for a modern and responsive user interface.
+  - **React**: For building the user interface.
+  - **Redux**: For state management.
+- **Backend**: Node.js and Express for robust server-side operations.
+  - **SQLite**: For efficient data storage and retrieval.
+- **Authentication**: Bcrypt to ensure password hash.
 
-## Expanding the ESLint configuration
+## Installation
+1. Clone the repository:
+  ```sh
+  git clone https://github.com/mujeeb2003/management.git
+  ```
+2. Navigate to the project directory:
+  ```sh
+  cd management
+  ```
+3. Install dependencies:
+  ```sh
+  npm install
+  ```
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+## Usage
+1. Start the application:
+  ```sh
+  npm start 
+  ```
+2. Open your browser and navigate to `http://localhost:5173`.
 
-- Configure the top-level `parserOptions` property like this:
+## Contributing
+Contributions are welcome! Please fork the repository and create a pull request with your changes.
 
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
-```
+## License
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+## Contact
+For any inquiries or feedback, please contact [mrehman0501305@gmail.com](mailto:mrehman0501305@gmail.com).
 
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
-
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
-```

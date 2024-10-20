@@ -391,6 +391,82 @@ app.get('/backupData', (req, res) => {
     });
 });
 
+
+app.put("/users/:id", async (req, res) => {
+    const { id } = req.params;
+    const { firstName, lastName, email } = req.body;
+    
+    try {
+        db.run(
+            `UPDATE users SET firstName = ?, lastName = ?, email = ? WHERE id = ?`,
+            [firstName, lastName, email, id],
+            function (err) {
+                if (err) {
+                    res.status(400).json({ error: err.message });
+                    return;
+                }
+                if (this.changes === 0) {
+                    res.status(404).json({ error: "User not found" });
+                    return;
+                }
+                res.status(200).json({
+                    message: "User information updated successfully",
+                    data: { id, firstName, lastName, email },
+                });
+            }
+        );
+    } catch (error) {
+        console.log(error.message);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Change user password
+app.put("/users/:id/password", async (req, res) => {
+    const { id } = req.params;
+    const { currentPassword, newPassword } = req.body;
+    
+    try {
+        db.get("SELECT password FROM users WHERE id = ?", [id], async (err, row) => {
+            if (err) {
+                res.status(400).json({ error: err.message });
+                return;
+            }
+            if (!row) {
+                res.status(404).json({ error: "User not found" });
+                return;
+            }
+            
+            const isMatch = await compare(currentPassword, row.password);
+            
+            if (!isMatch) {
+                res.status(400).json({ error: "Current password is incorrect" });
+                return;
+            }
+            
+            const salt = await genSalt(10);
+            const hashedNewPassword = await hash(newPassword, salt);
+            
+            db.run(
+                `UPDATE users SET password = ? WHERE id = ?`,
+                [hashedNewPassword, id],
+                function (err) {
+                    if (err) {
+                        res.status(400).json({ error: err.message });
+                        return;
+                    }
+                    res.status(200).json({
+                        message: "Password updated successfully",
+                    });
+                }
+            );
+        });
+    } catch (error) {
+        console.log(error.message);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 app.listen(port, () => {
     console.log(`Server running on port ${port}`);
 });

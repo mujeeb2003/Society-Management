@@ -1,12 +1,6 @@
-import {
-    createAsyncThunk,
-    createSlice,
-    isRejectedWithValue,
-} from "@reduxjs/toolkit";
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import type { userState, Villas } from "@/types";
 import axios from "axios";
-import type { type } from "os";
-import { createElement } from "react";
 
 const initialState: userState = {
     user: {
@@ -184,24 +178,51 @@ export const backupDatabase = createAsyncThunk(
     }
 );
 
+export const updateUser = createAsyncThunk("/user/updateUser", async () => {
+    const user = localStorage.getItem("user");
+    if (user) {
+        return JSON.parse(user);
+    }
+    return {};
+});
+
+export const updateUserInfo = createAsyncThunk(
+    "user/updateInfo",
+    async (
+        userInfo: { firstName: string; lastName: string; email: string, id: number },
+        { rejectWithValue }
+    ) => {
+        try {
+            const response = await axios.put(`/api/users/${userInfo.id}`, userInfo);
+            return response.data;
+        } catch (error:any) {
+            return rejectWithValue(error.response.data);
+        }
+    }
+);
+
+export const changePassword = createAsyncThunk(
+    "user/changePassword",
+    async (
+        passwordData: { id:number; currentPassword: string; newPassword: string },
+        { rejectWithValue }
+    ) => {
+        try {
+            const response = await axios.put(
+                `/api/users/${passwordData.id}/password`,
+                passwordData
+            );
+            return response.data;
+        } catch (error:any) {
+            return rejectWithValue(error.response.data);
+        }
+    }
+);
+
 const userSlice = createSlice({
     initialState,
     name: `user`,
-    reducers: {
-        updateUser: (state, action) => {
-            state.user = action.payload;
-            state.isLoggedIn = true;
-        },
-        checkUserLogin: (state) => {
-            try {
-                const user = localStorage.getItem("user");
-                if (user) return JSON.parse(user);
-                return;
-            } catch (err: any) {
-                return;
-            }
-        }
-    },
+    reducers: {},
     extraReducers: (builder) => {
         builder.addCase(userLogin.pending, (state) => {
             state.loading = true;
@@ -309,8 +330,24 @@ const userSlice = createSlice({
             state.loading = false;
             state.error = payload as string;
         });
+        builder.addCase(updateUser.pending, (state) => {
+            state.loading = true;
+        });
+        builder.addCase(updateUser.fulfilled, (state, { payload }) => {
+            state.loading = false;
+            if (payload) {
+                state.user = payload;
+                state.isLoggedIn = true;
+                return;
+            }
+            state.isLoggedIn = false;
+        });
+        builder.addCase(updateUser.rejected, (state, { payload }) => {
+            state.loading = false;
+            state.error = payload as string;
+        });
     },
 });
 
 export const userReducer = userSlice.reducer;
-export const { updateUser,checkUserLogin } = userSlice.actions;
+export const {} = userSlice.actions;

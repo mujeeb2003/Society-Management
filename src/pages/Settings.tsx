@@ -1,9 +1,9 @@
-import { createElement, useState } from "react";
+import { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import {
     Card,
@@ -15,39 +15,95 @@ import {
 } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User, Lock, Database } from "lucide-react";
-import { backupDatabase } from "@/redux/user/userSlice";
-import { useDispatch, useSelector } from "react-redux";
+import { backupDatabase, updateUserInfo, changePassword } from "@/redux/user/userSlice";
 import { AppDispatch, type RootState } from "@/types";
+import axios from "axios";
 
 export default function SettingsPage() {
     const dispatch = useDispatch<AppDispatch>();
-    const {user} = useSelector((state:RootState) => state.user);
-    // console.log(JSON.stringify(user,null,4))
-    // const [user, setUser] = useState({
-    //     name: "John Doe",
-    //     email: "john.doe@example.com",
-    //     bio: "I'm a software developer passionate about creating amazing user experiences.",
-    //     avatar: "/placeholder-avatar.jpg",
-    // });
+    const { user } = useSelector((state: RootState) => state.user);
     const { toast } = useToast();
 
-    // const handleInputChange = (
-    //     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-    // ) => {
-    //     const { name, value } = e.target;
-    //     setUser((prevUser) => ({
-    //         ...prevUser,
-    //         [name]: value,
-    //     }));
-    // };
+    const [userInfo, setUserInfo] = useState({
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+    });
 
-    const handleSave = () => {
-        // Here you would typically make an API call to save the user's settings
-        console.log("Saving user settings:", user);
-        toast({
-            title: "Settings saved",
-            description: "Your settings have been saved successfully.",
-        });
+    const [passwords, setPasswords] = useState({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+    });
+
+    const handleInputChange = (
+        e: React.ChangeEvent<HTMLInputElement>
+    ) => {
+        const { name, value } = e.target;
+        setUserInfo((prev) => ({
+            ...prev,
+            [name]: value,
+        }));
+    };
+
+    const handlePasswordChange = (
+        e: React.ChangeEvent<HTMLInputElement>
+    ) => {
+        const { name, value } = e.target;
+        setPasswords((prev) => ({
+            ...prev,
+            [name]: value,
+        }));
+    };
+
+    const handleSave = async () => {
+        try {
+            await dispatch(updateUserInfo({...userInfo,id:user.id})).unwrap();
+            toast({
+                title: "Profile updated",
+                description: "Your profile has been updated successfully.",
+            });
+        } catch (error) {
+            toast({
+                title: "Error",
+                description: "An error occurred while updating your profile.",
+                variant: "destructive",
+            });
+        }
+    };
+
+    const handlePasswordUpdate = async () => {
+        if (passwords.newPassword !== passwords.confirmPassword) {
+            toast({
+                title: "Error",
+                description: "New passwords do not match.",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        try {
+            await dispatch(changePassword({
+                id: user.id,
+                currentPassword: passwords.currentPassword,
+                newPassword: passwords.newPassword,
+            })).unwrap();
+            toast({
+                title: "Password updated",
+                description: "Your password has been updated successfully.",
+            });
+            setPasswords({
+                currentPassword: "",
+                newPassword: "",
+                confirmPassword: "",
+            });
+        } catch (error) {
+            toast({
+                title: "Error",
+                description: "An error occurred while updating your password.",
+                variant: "destructive",
+            });
+        }
     };
 
     const handleBackupDatabase = async () => {
@@ -64,7 +120,6 @@ export default function SettingsPage() {
                 variant: "destructive",
             });
         }
-
     };
 
     return (
@@ -101,27 +156,27 @@ export default function SettingsPage() {
                                         alt={user.firstName}
                                     />
                                     <AvatarFallback>
-                                        {/* {user.firstName.charAt(0)} */}
+                                        {user.firstName.charAt(0)}
                                     </AvatarFallback>
                                 </Avatar>
                                 <Button variant="outline">Change Avatar</Button>
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="name">First Name</Label>
+                                <Label htmlFor="firstName">First Name</Label>
                                 <Input
-                                    id="name"
-                                    name="name"
-                                    value={user.firstName}
-                                    // onChange={handleInputChange}
+                                    id="firstName"
+                                    name="firstName"
+                                    value={userInfo.firstName}
+                                    onChange={handleInputChange}
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="name">Last Name</Label>
+                                <Label htmlFor="lastName">Last Name</Label>
                                 <Input
-                                    id="name"
-                                    name="name"
-                                    value={user.lastName}
-                                    // onChange={handleInputChange}
+                                    id="lastName"
+                                    name="lastName"
+                                    value={userInfo.lastName}
+                                    onChange={handleInputChange}
                                 />
                             </div>
                             <div className="space-y-2">
@@ -130,8 +185,8 @@ export default function SettingsPage() {
                                     id="email"
                                     name="email"
                                     type="email"
-                                    value={user.email}
-                                    // onChange={handleInputChange}
+                                    value={userInfo.email}
+                                    onChange={handleInputChange}
                                 />
                             </div>
                         </CardContent>
@@ -150,26 +205,44 @@ export default function SettingsPage() {
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="space-y-2">
-                                <Label htmlFor="current-password">
+                                <Label htmlFor="currentPassword">
                                     Current Password
                                 </Label>
-                                <Input id="current-password" type="password" />
+                                <Input
+                                    id="currentPassword"
+                                    name="currentPassword"
+                                    type="password"
+                                    value={passwords.currentPassword}
+                                    onChange={handlePasswordChange}
+                                />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="new-password">
+                                <Label htmlFor="newPassword">
                                     New Password
                                 </Label>
-                                <Input id="new-password" type="password" />
+                                <Input
+                                    id="newPassword"
+                                    name="newPassword"
+                                    type="password"
+                                    value={passwords.newPassword}
+                                    onChange={handlePasswordChange}
+                                />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="confirm-password">
+                                <Label htmlFor="confirmPassword">
                                     Confirm New Password
                                 </Label>
-                                <Input id="confirm-password" type="password" />
+                                <Input
+                                    id="confirmPassword"
+                                    name="confirmPassword"
+                                    type="password"
+                                    value={passwords.confirmPassword}
+                                    onChange={handlePasswordChange}
+                                />
                             </div>
                         </CardContent>
                         <CardFooter>
-                            <Button>Update Password</Button>
+                            <Button onClick={handlePasswordUpdate}>Update Password</Button>
                         </CardFooter>
                     </Card>
                 </TabsContent>

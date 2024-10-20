@@ -29,7 +29,6 @@ export function LoginForm() {
   }
   
   const handleSubmit = async () => {
-    console.log(JSON.stringify(formData,null,4));
 
     try {
       const response = await dispatch(userLogin(formData));
@@ -38,7 +37,6 @@ export function LoginForm() {
         toast({ title: "User Sign In",description: response.payload.error })
         return;
       }
-      console.log(response);
 
       toast({ title: "User Sign In",description: `User signed in successfully, ${response.payload.data.email}` })
       navigate('/home');
