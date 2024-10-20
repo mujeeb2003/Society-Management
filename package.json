@@ -7,7 +7,7 @@
     "start:dev": "vite",
     "start:srv": "nodemon ./api/app.js",
     "build": "tsc -b && vite build",
-    "postinstall": "node ./api/setupDB.js",
+    "postinstall": "node api/setupdb.js",
     "lint": "eslint .",
     "preview": "vite preview",
     "start": "concurrently \"npm run start:srv\" \"npm run start:dev\""
