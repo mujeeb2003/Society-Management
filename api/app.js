@@ -21,7 +21,7 @@ app.use(express.json());
 
 // Database connection
 export const db = new SQLite3.Database(
-    join(__dirname, "db", "society_payments.db"),
+    join(__dirname, "../db", "society_payments.db"),
     SQLite3.OPEN_READWRITE,
     (err) => {
         try {

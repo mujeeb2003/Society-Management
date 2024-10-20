@@ -5,8 +5,9 @@
   "type": "module",
   "scripts": {
     "start:dev": "vite",
-    "start:srv": "nodemon app.js",
+    "start:srv": "nodemon ./api/app.js",
     "build": "tsc -b && vite build",
+    "postinstall": "node api/setupDB.js",
     "lint": "eslint .",
     "preview": "vite preview",
     "start": "concurrently npm:start:*"
