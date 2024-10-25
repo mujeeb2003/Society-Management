@@ -10,7 +10,7 @@ const __filename = fileURLToPath(import.meta.url);
 export const __dirname = dirname(__filename);
 
 export const app = express();
-const port = process.env.PORT || 5000;
+const port = process.env.PORT || 5001;
 
 const { verbose } = sqlite3;
 export const SQLite3 = verbose();

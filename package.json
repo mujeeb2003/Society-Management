@@ -4,10 +4,10 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "start:dev": "vite",
-    "start:srv": "nodemon ./api/app.js",
+    "start:dev": "vite --port 5174",
+    "start:srv": "nodemon ./backend/api/app.js",
     "build": "tsc -b && vite build",
-    "postinstall": "node api/setupdb.js",
+    "postinstall": "node backend/api/setupdb.js",
     "lint": "eslint .",
     "preview": "vite preview",
     "start": "concurrently \"npm run start:srv\" \"npm run start:dev\""

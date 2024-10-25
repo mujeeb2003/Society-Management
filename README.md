@@ -29,11 +29,11 @@ The Society Management App is designed to help society heads manage monthly paym
 ## Installation
 1. Clone the repository:
   ```sh
-  git clone https://github.com/mujeeb2003/management.git
+  git clone https://github.com/mujeeb2003/Society-Management.git
   ```
 2. Navigate to the project directory:
   ```sh
-  cd management
+  cd Society-Management
   ```
 3. Install dependencies:
   ```sh
