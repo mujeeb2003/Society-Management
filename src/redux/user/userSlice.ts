@@ -16,6 +16,7 @@ const initialState: userState = {
     error: "",
 };
 
+const API_URL = import.meta.env.VITE_API_URL || "/api";
 export const userLogin = createAsyncThunk(
     "user/login",
     async (
@@ -23,7 +24,7 @@ export const userLogin = createAsyncThunk(
         { rejectWithValue }
     ) => {
         try {
-            const res = await axios.post("/api/login", credentials);
+            const res = await axios.post(`${API_URL}/login`, credentials);
             return res.data;
         } catch (err: any) {
             if (err.response && err.response.data) {
@@ -46,7 +47,7 @@ export const userSignup = createAsyncThunk(
         { rejectWithValue }
     ) => {
         try {
-            const res = await axios.post("/api/users", credentials);
+            const res = await axios.post(`${API_URL}/users`, credentials);
             return res.data;
         } catch (err: any) {
             if (err.response && err.response.data) {
@@ -61,7 +62,7 @@ export const userLogout = createAsyncThunk(
     "user/logout",
     async (_, { rejectWithValue }) => {
         try {
-            const res = await axios.get("/api/logout");
+            const res = await axios.get(`${API_URL}/logout`);
             return res.data;
         } catch (error: any) {
             return rejectWithValue({ error: "Something went wrong" });
@@ -73,7 +74,7 @@ export const getVillas = createAsyncThunk(
     "user/getVillas",
     async (_, { rejectWithValue }) => {
         try {
-            const res = await axios.get("/api/villas");
+            const res = await axios.get(`${API_URL}/villas`);
             return res.data;
         } catch (error: any) {
             return rejectWithValue({ error: "Something went wrong" });
@@ -85,7 +86,7 @@ export const getPayments = createAsyncThunk(
     "user/getPayments",
     async (_, { rejectWithValue }) => {
         try {
-            const res = axios.get("/api/payments");
+            const res = axios.get(`${API_URL}/payments`);
             return (await res).data;
         } catch (error) {
             return rejectWithValue({ error: "Something went wrong" });
@@ -106,7 +107,7 @@ export const postPayment = createAsyncThunk(
         { rejectWithValue }
     ) => {
         try {
-            const res = await axios.post("/api/payments", credentials);
+            const res = await axios.post(`${API_URL}/payments`, credentials);
             return res.data;
         } catch (err: any) {
             if (err.response && err.response.data) {
@@ -130,7 +131,7 @@ export const postVilla = createAsyncThunk(
         { rejectWithValue }
     ) => {
         try {
-            const res = await axios.post("/api/villas", credentials);
+            const res = await axios.post(`${API_URL}/villas`, credentials);
             return res.data;
         } catch (error) {
             return rejectWithValue({ error: "Something went wrong" });
@@ -143,7 +144,7 @@ export const editVilla = createAsyncThunk(
     async (credentials: Villas, { rejectWithValue }) => {
         try {
             const res = await axios.patch(
-                `/api/villas/${credentials.id}`,
+                `${API_URL}/villas/${credentials.id}`,
                 credentials
             );
             return res.data;
@@ -157,7 +158,7 @@ export const backupDatabase = createAsyncThunk(
     "user/backupDatabase",
     async (_, { rejectWithValue }) => {
         try {
-            const response = await axios.get("/api/backupData", {
+            const response = await axios.get(`${API_URL}/backupData`, {
                 responseType: "blob",
             });
 
@@ -193,7 +194,7 @@ export const updateUserInfo = createAsyncThunk(
         { rejectWithValue }
     ) => {
         try {
-            const response = await axios.put(`/api/users/${userInfo.id}`, userInfo);
+            const response = await axios.put(`${API_URL}/users/${userInfo.id}`, userInfo);
             return response.data;
         } catch (error:any) {
             return rejectWithValue(error.response.data);
@@ -209,7 +210,7 @@ export const changePassword = createAsyncThunk(
     ) => {
         try {
             const response = await axios.put(
-                `/api/users/${passwordData.id}/password`,
+                `${API_URL}/users/${passwordData.id}/password`,
                 passwordData
             );
             return response.data;
