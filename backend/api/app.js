@@ -5,6 +5,7 @@ import { fileURLToPath } from "url";
 import { dirname, format, join } from "path";
 import { genSalt, hash, compare } from "bcrypt";
 import PDFDocument from 'pdfkit';
+import setupDB from "./setupdb.js";
 
 const __filename = fileURLToPath(import.meta.url);
 export const __dirname = dirname(__filename);
@@ -14,6 +15,7 @@ const port = process.env.PORT || 5001;
 
 const { verbose } = sqlite3;
 export const SQLite3 = verbose();
+setupDB();
 
 // Middleware
 app.use(cors());
