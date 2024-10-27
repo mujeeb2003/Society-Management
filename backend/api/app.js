@@ -15,7 +15,7 @@ const port = process.env.PORT || 5001;
 
 const { verbose } = sqlite3;
 export const SQLite3 = verbose();
-setupDB();
+// setupDB();
 
 // Middleware
 app.use(cors());
