@@ -11,6 +11,8 @@ import type { AppDispatch } from "./types";
 import { useDispatch } from "react-redux";
 import { useEffect } from "react";
 import { getPayments, getVillas, updateUser } from "./redux/user/userSlice";
+import PaymentHeadsManagement from "./pages/PaymentHeads";
+
 function App() {
     const dispatch = useDispatch<AppDispatch>();
 
@@ -46,10 +48,15 @@ function App() {
                                             path="/villas"
                                             element={<Villas />}
                                         />
+                                        <Route 
+                                            path="/paymentHeads"
+                                            element={<PaymentHeadsManagement />}
+                                        />
                                         <Route
                                             path="/settings"
                                             element={<Settings />}
                                         />
+                                        
                                     </Routes>
                                 </>
                             }

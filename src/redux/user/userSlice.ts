@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import type { userState, Villas } from "@/types";
+import type { PaymentHead, userState, Villas } from "@/types";
 import axios from "axios";
 
 const initialState: userState = {
@@ -11,12 +11,14 @@ const initialState: userState = {
     },
     villas: [],
     payments: [],
+    paymentHeads: [],
     isLoggedIn: false,
     loading: false,
     error: "",
 };
 
 const API_URL = import.meta.env.VITE_API_URL || "/api";
+
 export const userLogin = createAsyncThunk(
     "user/login",
     async (
@@ -100,6 +102,7 @@ export const postPayment = createAsyncThunk(
         credentials: {
             villa_id: number;
             amount: number;
+            payment_head_id: number;
             payment_date: string;
             payment_month: string;
             payment_year: string;
@@ -121,13 +124,7 @@ export const postPayment = createAsyncThunk(
 export const postVilla = createAsyncThunk(
     "user/postVilla",
     async (
-        credentials: {
-            villa_number: string;
-            owner_name: string;
-            resident_name: string;
-            occupancy_type: string;
-            Payable: number;
-        },
+        credentials: Villas,
         { rejectWithValue }
     ) => {
         try {
@@ -178,6 +175,54 @@ export const backupDatabase = createAsyncThunk(
         }
     }
 );
+
+export const getPaymentHeads = createAsyncThunk(
+    "user/getPaymentHeads",
+    async (_, { rejectWithValue }) => {
+        try {
+            const response = await axios.get(`${API_URL}/payment-heads`);
+            return response.data;
+        } catch (error) {
+            return rejectWithValue({ error: "Something went wrong" });
+        }
+    }
+)
+
+export const postPaymentHead = createAsyncThunk(
+    "user/postPaymentHead",
+    async (paymentHead: Partial<PaymentHead>, { rejectWithValue }) => {
+        try {
+            const response = await axios.post(`${API_URL}/payment-heads`, paymentHead);
+            return response.data;
+        } catch (error) {
+            return rejectWithValue({ error: "Something went wrong" });
+        }
+    }
+)
+
+export const deletePaymentHead = createAsyncThunk(
+    "user/deletePaymentHead",
+    async (paymentHeadId: number, { rejectWithValue }) => {
+        try {
+            const response = await axios.delete(`${API_URL}/payment-heads/${paymentHeadId}`);
+            return response.data;
+        } catch (error) {
+            return rejectWithValue({ error: "Something went wrong" });
+        }
+    }
+)
+
+export const updatePaymentHead = createAsyncThunk(
+    "user/updatePaymentHead",
+    async (paymentHead: PaymentHead, { rejectWithValue }) => {
+        try {
+            const response = await axios.patch(`${API_URL}/payment-heads/${paymentHead.id}`, paymentHead);
+            return response.data;
+        } catch (error) {
+            return rejectWithValue({ error: "Something went wrong" });
+        }
+    }
+)
 
 export const updateUser = createAsyncThunk("/user/updateUser", async () => {
     const user = localStorage.getItem("user");
@@ -344,6 +389,47 @@ const userSlice = createSlice({
             state.isLoggedIn = false;
         });
         builder.addCase(updateUser.rejected, (state, { payload }) => {
+            state.loading = false;
+            state.error = payload as string;
+        });
+        builder.addCase(getPaymentHeads.pending, (state) => {
+            state.loading = true;
+        });
+        builder.addCase(getPaymentHeads.fulfilled, (state, { payload }) => {
+            state.loading = false;
+            state.paymentHeads = payload.data;
+        });
+        builder.addCase(getPaymentHeads.rejected, (state, { payload }) => {
+            state.loading = false;
+            state.error = payload as string;
+        });
+        builder.addCase(postPaymentHead.pending, (state) => {
+            state.loading = true;
+        });
+        builder.addCase(postPaymentHead.fulfilled, (state) => {
+            state.loading = false;
+        });
+        builder.addCase(postPaymentHead.rejected, (state, { payload }) => {
+            state.loading = false;
+            state.error = payload as string;
+        });
+        builder.addCase(updatePaymentHead.pending, (state) => {
+            state.loading = true;
+        });
+        builder.addCase(updatePaymentHead.fulfilled, (state) => {
+            state.loading = false;
+        });
+        builder.addCase(updatePaymentHead.rejected, (state, { payload }) => {
+            state.loading = false;
+            state.error = payload as string;
+        });
+        builder.addCase(deletePaymentHead.pending, (state) => {
+            state.loading = true;
+        });
+        builder.addCase(deletePaymentHead.fulfilled, (state) => {
+            state.loading = false;
+        });
+        builder.addCase(deletePaymentHead.rejected, (state, { payload }) => {
             state.loading = false;
             state.error = payload as string;
         });

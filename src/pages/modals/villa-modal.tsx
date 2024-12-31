@@ -30,23 +30,23 @@ export function VillaModal({ isOpen, onClose, onSave, villaToEdit }: VillaModalP
   const [villa, setVilla] = useState<Villas>({
     id: 0,
     villa_number: "",
-    owner_name: "",
+    // owner_name: "",
     resident_name: "",
     occupancy_type: "owner",
-    Payable: 0,
+    // Payable: 0,
   })
 
   useEffect(() => {
     if (villaToEdit) {
-      setVilla(villaToEdit)
+      setVilla({...villa, ...villaToEdit})
     } else {
       setVilla({
         id: 0,
         villa_number: "",
-        owner_name: "",
+        // owner_name: "",
         resident_name: "",
         occupancy_type: "owner",
-        Payable: 0,
+        // Payable: 0,
       })
     }
   }, [villaToEdit])
@@ -80,7 +80,7 @@ export function VillaModal({ isOpen, onClose, onSave, villaToEdit }: VillaModalP
               className="col-span-3"
             />
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
+          {/* <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="owner_name" className="text-right">
               Owner Name
             </Label>
@@ -91,7 +91,7 @@ export function VillaModal({ isOpen, onClose, onSave, villaToEdit }: VillaModalP
               onChange={handleChange}
               className="col-span-3"
             />
-          </div>
+          </div> */}
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="resident_name" className="text-right">
               Resident Name
@@ -99,7 +99,7 @@ export function VillaModal({ isOpen, onClose, onSave, villaToEdit }: VillaModalP
             <Input
               id="resident_name"
               name="resident_name"
-              value={villa.resident_name}
+              value={villa.resident_name!}
               onChange={handleChange}
               className="col-span-3"
             />
@@ -110,7 +110,7 @@ export function VillaModal({ isOpen, onClose, onSave, villaToEdit }: VillaModalP
             </Label>
             <Select
               onValueChange={(value) => setVilla((prev) => ({ ...prev, occupancy_type: value as "owner" | "tenant" }))}
-              defaultValue={villa.occupancy_type}
+              defaultValue={villa.occupancy_type!}
             >
               <SelectTrigger className="col-span-3">
                 <SelectValue placeholder="Select occupancy type" />
@@ -121,7 +121,7 @@ export function VillaModal({ isOpen, onClose, onSave, villaToEdit }: VillaModalP
               </SelectContent>
             </Select>
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
+          {/* <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="Payable" className="text-right">
               Payable
             </Label>
@@ -133,7 +133,7 @@ export function VillaModal({ isOpen, onClose, onSave, villaToEdit }: VillaModalP
               onChange={handleChange}
               className="col-span-3"
             />
-          </div>
+          </div> */}
         </div>
         <DialogFooter>
           <Button type="submit" onClick={handleSave}>Save changes</Button>

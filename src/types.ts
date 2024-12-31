@@ -3,7 +3,8 @@ import { store } from "./redux/store";
 export type userState = {
     user: User;
     villas: Villas[];
-    payments : Payment[];
+    payments: Payment[];
+    paymentHeads: PaymentHead[];
     isLoggedIn: boolean;
     error: string;
     loading: boolean;
@@ -19,25 +20,36 @@ export type User = {
 export type Villas = {
     id: number;
     villa_number: string;
-    owner_name: string;
-    resident_name: string;
-    occupancy_type: string;
-    Payable: number;
+    resident_name: string | null;
+    occupancy_type: string | null;
 };
 
 export type Payment = {
-    id:number;
+    id: number;
     villa_number: string;
     resident_name: string;
     occupancy_type: string;
-    Payable: number;
+    is_recurring:boolean;
     Payments: Payable[];
+};
+
+export type PaymentHead = {
+    id: number;
+    name: string;
+    description: string;
+    amount: number;
+    is_recurring: boolean;
 };
 
 export type Payable = {
     latest_payment: number;
     latest_payment_date: string;
+    latest_payment_month:string;
+    payment_year: number;
     payment_id: number;
+    payment_head_id: number;
+    payment_head_name: string;
+    payment_head_amount: string;
 };
 
 export type RootState = ReturnType<typeof store.getState>;

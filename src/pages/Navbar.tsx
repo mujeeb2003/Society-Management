@@ -59,6 +59,16 @@ function Navbar() {
                     Villas
                 </Link>
                 <Link
+                    to="/home/paymentHeads"
+                    className={`${
+                        isActive("/home/paymentHeads")
+                            ? "text-foreground"
+                            : "text-muted-foreground"
+                    } transition-colors hover:text-foreground`}
+                >
+                    Payment Head
+                </Link>
+                <Link
                     to="/home/settings"
                     className={`${
                         isActive("/home/settings")
@@ -102,6 +112,12 @@ function Navbar() {
                             className="text-muted-foreground hover:text-foreground"
                         >
                             Villas
+                        </Link>
+                        <Link
+                            to="/home/paymentHeads"
+                            className="text-muted-foreground hover:text-foreground"
+                        >
+                            Payment Head
                         </Link>
                         <Link
                             to="/home/settings"

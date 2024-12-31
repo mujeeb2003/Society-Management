@@ -26,34 +26,40 @@ import {
   DropdownMenuLabel,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu"
-import {
-  File,
-  MoreHorizontal,
-  PlusCircle,
-} from "lucide-react"
-import { useState } from "react"
+import { File, MoreHorizontal, PlusCircle } from 'lucide-react'
+import { useState, useMemo } from "react"
 import { useSelector, useDispatch } from "react-redux"
 import { VillaModal } from "./modals/villa-modal"
 import { editVilla, getVillas, postVilla } from "@/redux/user/userSlice"
 import { useToast } from "@/hooks/use-toast"
 import AddPaymentDialog from "./dialogs/AddPaymentDialog"
 
-
 function Villas() {
   const dispatch = useDispatch<AppDispatch>()
-  const { villas } = useSelector((state: RootState) => state.user)
+  const { villas, payments, paymentHeads } = useSelector((state: RootState) => state.user)
 
   const [filter, setFilter] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [villaToEdit, setVillaToEdit] = useState<Villas | null>(null)
-  const { toast } = useToast();
+  const { toast } = useToast()
 
   const itemsPerPage = 20
 
-  const filteredHouses = villas.filter(house => 
+  const villasWithPayments = useMemo(() => {
+    return villas.map(villa => {
+      const villaPayments = payments.find(p => p.id === villa.id)?.Payments || []
+      const totalPending = villaPayments.reduce((total, payment) => {
+        const paymentHead = paymentHeads.find(head => head.id === payment.payment_head_id)
+        return total + (paymentHead ? paymentHead.amount - payment.latest_payment : 0)
+      }, 0)
+      return { ...villa, totalPending }
+    })
+  }, [villas, payments, paymentHeads])
+
+  const filteredHouses = villasWithPayments.filter(house => 
     house.villa_number.toLowerCase().includes(filter.toLowerCase()) ||
-    house.resident_name.toLowerCase().includes(filter.toLowerCase())
+    house.resident_name?.toLowerCase().includes(filter.toLowerCase())
   )
 
   const totalPages = Math.ceil(filteredHouses.length / itemsPerPage)
@@ -72,18 +78,18 @@ function Villas() {
   }
 
   const handleSaveVilla = async (villa: Villas) => {
-    let res;
-    if(villa.id !== 0){
+    let res
+    if (villa.id !== 0) {
       res = await dispatch(editVilla(villa))
-    }else{
+    } else {
       res = await dispatch(postVilla(villa))
     }
-    if(!res.payload.data.id){
-      toast({ title: "Error",description: `Try again later` })
-      return setIsModalOpen(false);
+    if (!res.payload.data.id) {
+      toast({ title: "Error", description: `Try again later` })
+      return setIsModalOpen(false)
     }
     dispatch(getVillas())
-    toast({ title: "Villa Saved",description: `Villa ${villa.villa_number} saved successfully` })    
+    toast({ title: "Villa Saved", description: `Villa ${villa.villa_number} saved successfully` })    
     setIsModalOpen(false)
   }
 
@@ -117,10 +123,9 @@ function Villas() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Villa Number</TableHead>
-                  <TableHead>Owner Name</TableHead>
                   <TableHead>Resident Name</TableHead>
                   <TableHead>Occupancy Type</TableHead>
-                  <TableHead>Payable</TableHead>
+                  <TableHead>Total Pending</TableHead>
                   <TableHead><span className="sr-only">Actions</span></TableHead>
                 </TableRow>
               </TableHeader>
@@ -128,14 +133,13 @@ function Villas() {
                 {currentHouses.map((house) => (
                   <TableRow key={house.id}>
                     <TableCell className="font-medium">{house.villa_number}</TableCell>
-                    <TableCell>{house.owner_name}</TableCell>
-                    <TableCell>{house.resident_name}</TableCell>
+                    <TableCell>{house.resident_name ? house.resident_name : "-"}</TableCell>
                     <TableCell>
                       <Badge variant={house.occupancy_type === "owner" ? "default" : "secondary"}>
-                        {house.occupancy_type}
+                        {house.occupancy_type ? house.occupancy_type : "-"}
                       </Badge>
                     </TableCell>
-                    <TableCell>PKR {house.Payable.toFixed(2)}</TableCell>
+                    <TableCell>PKR {house.totalPending?.toLocaleString() || "-"}</TableCell>
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -147,8 +151,7 @@ function Villas() {
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
                           <DropdownMenuItem onClick={() => handleEditVilla(house)}>Edit</DropdownMenuItem>
-                          {/* <DropdownMenuItem >Add Payment</DropdownMenuItem> */}
-                          <AddPaymentDialog villaId={house.id}/>
+                          <AddPaymentDialog villaId={house.id} />
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>

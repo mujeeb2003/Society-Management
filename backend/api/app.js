@@ -4,7 +4,7 @@ import sqlite3 from "sqlite3";
 import { fileURLToPath } from "url";
 import { dirname, format, join } from "path";
 import { genSalt, hash, compare } from "bcrypt";
-import PDFDocument from 'pdfkit';
+import PDFDocument from "pdfkit";
 import setupDB from "./setupdb.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -39,6 +39,23 @@ export const db = new SQLite3.Database(
     }
 );
 
+app.get("/testing", async (req, res) => {
+    try {
+        db.all("select * from payments", [], (err, rows) => {
+            if (err) {
+                res.status(400).json({ error: err.message });
+                return;
+            }
+            res.status(200).json({
+                message: "success",
+                data: { rows },
+            });
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: error.message });
+    }
+});
 // User related routes
 app.get("/users", async (req, res) => {
     try {
@@ -63,7 +80,7 @@ app.post("/users", async (req, res) => {
     try {
         const salt = await genSalt(10);
         const hashedPassword = await hash(password, salt);
-        
+
         db.run(
             `INSERT INTO users (firstName,lastName,email,password) VALUES (?, ?, ?, ?)`,
             [firstName, lastName, email, hashedPassword],
@@ -99,14 +116,14 @@ app.post("/login", async (req, res) => {
                     res.status(400).json({ error: "User not found" });
                     return;
                 }
-                
+
                 const isMatch = await compare(password, row.password);
-                
+
                 if (!isMatch) {
                     res.status(400).json({ error: "Invalid credentials" });
                     return;
                 }
-                
+
                 res.status(200).json({
                     message: "success",
                     data: {
@@ -139,12 +156,12 @@ app.get("/logout", async (req, res) => {
 });
 
 app.post("/villas", (req, res) => {
-    const { villa_number, owner_name, resident_name, occupancy_type, Payable } =
-    req.body;
+    const { villa_number,resident_name, occupancy_type } =
+        req.body;
     try {
         db.run(
-            `INSERT INTO villas (villa_number, owner_name, resident_name, occupancy_type, Payable) VALUES (?, ?, ?, ?, ?)`,
-            [villa_number, owner_name, resident_name, occupancy_type, Payable],
+            `INSERT INTO villas (villa_number, resident_name, occupancy_type) VALUES (?, ?, ?)`,
+            [villa_number, resident_name, occupancy_type],
             function (err) {
                 if (err) {
                     res.status(400).json({ error: err.message });
@@ -164,19 +181,12 @@ app.post("/villas", (req, res) => {
 
 app.patch("/villas/:id", (req, res) => {
     const { id } = req.params;
-    const { villa_number, owner_name, resident_name, occupancy_type, Payable } =
-    req.body;
+    const { villa_number, resident_name, occupancy_type } =
+        req.body;
     try {
         db.run(
-            `UPDATE villas SET villa_number = ?, owner_name = ?, resident_name = ?, occupancy_type = ?, Payable = ? WHERE id = ?`,
-            [
-                villa_number,
-                owner_name,
-                resident_name,
-                occupancy_type,
-                Payable,
-                id,
-            ],
+            `UPDATE villas SET villa_number = ?, resident_name = ?, occupancy_type = ? WHERE id = ?`,
+            [villa_number,resident_name, occupancy_type, id],
             function (err) {
                 if (err) {
                     res.status(400).json({ error: err.message });
@@ -212,6 +222,91 @@ app.get("/villas", (req, res) => {
     }
 });
 
+// Get all payment heads
+app.get("/payment-heads", (req, res) => {
+    try {
+        db.all(`SELECT * FROM payment_heads`, [], (err, rows) => {
+            if (err) {
+                res.status(400).json({ error: err.message });
+                return;
+            }
+            res.status(200).json({
+                message: "success",
+                data: rows,
+            });
+        });
+    } catch (error) {
+        console.log(error.message);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Create a new payment head
+app.post("/payment-heads", (req, res) => {
+    const { name, description, amount, is_recurring } = req.body;
+    try {
+        db.run(
+            `INSERT INTO payment_heads (name, description, amount, is_recurring) VALUES (?, ?, ?, ?)`,
+            [name, description, amount, is_recurring],
+            function (err) {
+                if (err) {
+                    res.status(400).json({ error: err.message });
+                    return;
+                }
+                res.status(200).json({
+                    message: "success",
+                    data: { id: this.lastID },
+                });
+            }
+        );
+    } catch (error) {
+        console.log(error.message);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Update a payment head
+app.patch("/payment-heads/:id", (req, res) => {
+    const { id } = req.params;
+    const { name, description, amount, is_recurring } = req.body;
+    try {
+        db.run(
+            `UPDATE payment_heads SET name = ?, description = ?, amount = ?, is_recurring = ? WHERE id = ?`,
+            [name, description, amount, is_recurring, id],
+            function (err) {
+                if (err) {
+                    res.status(400).json({ error: err.message });
+                    return;
+                }
+                res.status(200).json({
+                    message: "success",
+                    data: { id: id },
+                });
+            }
+        );
+    } catch (error) {
+        console.log(error.message);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Delete a payment head
+app.delete("/payment-heads/:id", (req, res) => {
+    const { id } = req.params;
+    try {
+        db.run(`DELETE FROM payment_heads WHERE id = ?`, id, function (err) {
+            if (err) {
+                res.status(400).json({ error: err.message });
+                return;
+            }
+            res.status(200).json({ message: "deleted", rows: this.changes });
+        });
+    } catch (error) {
+        console.log(error.message);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 app.get("/payments", (req, res) => {
     try {
         db.all(
@@ -221,14 +316,19 @@ app.get("/payments", (req, res) => {
                 v.villa_number,
                 v.resident_name,
                 v.occupancy_type,
-                v.Payable,
+                ph.is_recurring,
                 JSON_GROUP_ARRAY(
-                    JSON_OBJECT('latest_payment', p.amount, 'latest_payment_date', p.payment_date, 'payment_id', p.id)
+                    JSON_OBJECT('latest_payment', p.amount, 'latest_payment_date', p.payment_date,'latest_payment_month',p.payment_month, 'payment_year', p.payment_year, 'payment_id', p.id,
+                    'payment_head_id', ph.id,
+                    'payment_head_name', ph.name,
+                    'payment_head_amount',ph.amount
+                    )
                 ) AS Payments
             FROM villas AS v
-            LEFT JOIN payments AS p ON v.id = p.villa_id
-            GROUP BY v.villa_number, v.resident_name, v.occupancy_type, v.Payable
-            ORDER BY v.villa_number
+            CROSS JOIN payment_heads AS ph
+            LEFT JOIN payments AS p ON v.id = p.villa_id AND ph.id = p.payment_head_id
+            GROUP BY v.id, ph.id
+            ORDER BY v.villa_number, ph.id
         `,
             [],
             (err, rows) => {
@@ -236,17 +336,17 @@ app.get("/payments", (req, res) => {
                     res.status(400).json({ error: err.message });
                     return;
                 }
-                
-                rows.forEach((villa) => {
-                    villa.Payments = JSON.parse(villa.Payments);
-                    villa.Payments.sort((a, b) => {
+
+                rows.forEach((row) => {
+                    row.Payments = JSON.parse(row.Payments);
+                    row.Payments.sort((a, b) => {
                         return (
                             new Date(b.latest_payment_date) -
                             new Date(a.latest_payment_date)
                         );
                     });
                 });
-                
+
                 res.status(200).json({
                     message: "success",
                     data: rows,
@@ -261,30 +361,41 @@ app.get("/payments", (req, res) => {
 
 app.post("/payments", async (req, res) => {
     try {
-        const { villa_id, amount, payment_date, payment_month, payment_year } =
-        req.body;
-        
-        db.all(
-            `SELECT * FROM villas WHERE id = ?`,
-            [villa_id],
-            function (err, Villa) {
+        const {
+            villa_id,
+            payment_head_id,
+            amount,
+            payment_date,
+            payment_month,
+            payment_year,
+        } = req.body;
+
+        db.get(
+            `SELECT * FROM payment_heads WHERE id = ?`,
+            [payment_head_id],
+            function (err, paymentHead) {
                 if (err) {
                     return res.status(400).json({ error: err.message });
                 }
-                
-                const VillaData = Villa[0]; // Assuming you expect only one result
-                
-                if (amount > VillaData.Payable) {
+
+                if (!paymentHead) {
+                    return res
+                        .status(400)
+                        .json({ error: "Invalid payment head" });
+                }
+
+                if (amount > paymentHead.amount) {
                     res.status(400).json({
-                        error: "Amount exceeds the villa's payable amount",
+                        error: "Amount exceeds the payment head's amount",
                     });
                     return;
                 }
-                
+
                 db.run(
-                    `INSERT INTO payments (villa_id, amount, payment_date, payment_month, payment_year) VALUES (?, ?, ?, ?, ?)`,
+                    `INSERT INTO payments (villa_id, payment_head_id, amount, payment_date, payment_month, payment_year) VALUES (?, ?, ?, ?, ?, ?)`,
                     [
                         villa_id,
+                        payment_head_id,
                         amount,
                         payment_date,
                         payment_month,
@@ -295,7 +406,7 @@ app.post("/payments", async (req, res) => {
                             res.status(400).json({ error: err.message });
                             return;
                         }
-                        
+
                         res.status(200).json({
                             message: "success",
                             data: { id: this.lastID },
@@ -309,8 +420,9 @@ app.post("/payments", async (req, res) => {
     }
 });
 
-app.get('/backupData', (req, res) => {
-    db.all(`
+app.get("/backupData", (req, res) => {
+    db.all(
+        `
         SELECT 
             p.id AS payment_id, 
             p.villa_id, 
@@ -322,82 +434,114 @@ app.get('/backupData', (req, res) => {
             v.Payable
         FROM payments p
         JOIN villas v ON p.villa_id = v.id
-    `, [], (err, payments) => {
-        if (err) {
-            console.error('Error fetching payments:', err);
-            return res.status(500).json({ error: 'An error occurred while fetching payments', details: err.message });
-        }
+    `,
+        [],
+        (err, payments) => {
+            if (err) {
+                console.error("Error fetching payments:", err);
+                return res.status(500).json({
+                    error: "An error occurred while fetching payments",
+                    details: err.message,
+                });
+            }
 
-        console.log(`Fetched ${payments.length} payments from database`);
-        try {
-            // Create a new PDF document
-            const doc = new PDFDocument({ margin: 30, size: 'A4' });
+            console.log(`Fetched ${payments.length} payments from database`);
+            try {
+                // Create a new PDF document
+                const doc = new PDFDocument({ margin: 30, size: "A4" });
 
-            // Set response headers for PDF download
-            res.setHeader('Content-Type', 'application/pdf');
-            res.setHeader('Content-Disposition', 'attachment; filename=payments.pdf');
+                // Set response headers for PDF download
+                res.setHeader("Content-Type", "application/pdf");
+                res.setHeader(
+                    "Content-Disposition",
+                    "attachment; filename=payments.pdf"
+                );
 
-            // Pipe the PDF document to the response
-            doc.pipe(res);
+                // Pipe the PDF document to the response
+                doc.pipe(res);
 
-            // Add content to the PDF
-            doc.fontSize(16).text('Payments Report', { align: 'center' });
-            doc.fontSize(10).text(`Date: ${new Date().toLocaleDateString()}`, { align: 'right' });
-            doc.moveDown(1);
+                // Add content to the PDF
+                doc.fontSize(16).text("Payments Report", { align: "center" });
+                doc.fontSize(10).text(
+                    `Date: ${new Date().toLocaleDateString()}`,
+                    { align: "right" }
+                );
+                doc.moveDown(1);
 
-            // Create a table
-            const table = {
-                headers: ['Payment ID', 'Villa No', 'Owner', 'Resident', 'Amount Paid', 'Pending Amount', 'Date'],
-                rows: payments.map(payment => [
-                    payment.payment_id,
-                    payment.villa_number,
-                    payment.owner_name,
-                    payment.resident_name,
-                    payment.amount,
-                    payment.Payable - payment.amount | 0,
-                    payment.payment_date
-                ])
-            };
+                // Create a table
+                const table = {
+                    headers: [
+                        "Payment ID",
+                        "Villa No",
+                        "Owner",
+                        "Resident",
+                        "Amount Paid",
+                        "Pending Amount",
+                        "Date",
+                    ],
+                    rows: payments.map((payment) => [
+                        payment.payment_id,
+                        payment.villa_number,
+                        payment.owner_name,
+                        payment.resident_name,
+                        payment.amount,
+                        (payment.Payable - payment.amount) | 0,
+                        payment.payment_date,
+                    ]),
+                };
 
-            // Draw table headers
-            const columnWidth = doc.page.width / table.headers.length - 10;
-            let yPosition = doc.y;
-            table.headers.forEach((header, i) => {
-                doc.fontSize(12).text(header, 30 + (i * columnWidth), yPosition, { width: columnWidth, align: 'center' });
-                doc.rect(30 + (i * columnWidth), yPosition, columnWidth, 20);
-            });
-            doc.moveDown(1);
-
-            // Draw table rows
-            table.rows.forEach(row => {
-                yPosition = doc.y;
-                row.forEach((cell, i) => {
-                    doc.fontSize(10).text(cell ? cell.toString() : '', 30 + (i * columnWidth), yPosition, { width: columnWidth, align: 'center' });
-                    doc.rect(30 + (i * columnWidth), yPosition, columnWidth, 20);
+                // Draw table headers
+                const columnWidth = doc.page.width / table.headers.length - 10;
+                let yPosition = doc.y;
+                table.headers.forEach((header, i) => {
+                    doc.fontSize(12).text(
+                        header,
+                        30 + i * columnWidth,
+                        yPosition,
+                        { width: columnWidth, align: "center" }
+                    );
+                    doc.rect(30 + i * columnWidth, yPosition, columnWidth, 20);
                 });
                 doc.moveDown(1);
-            });
 
+                // Draw table rows
+                table.rows.forEach((row) => {
+                    yPosition = doc.y;
+                    row.forEach((cell, i) => {
+                        doc.fontSize(10).text(
+                            cell ? cell.toString() : "",
+                            30 + i * columnWidth,
+                            yPosition,
+                            { width: columnWidth, align: "center" }
+                        );
+                        doc.rect(
+                            30 + i * columnWidth,
+                            yPosition,
+                            columnWidth,
+                            20
+                        );
+                    });
+                    doc.moveDown(1);
+                });
 
-            // Finalize the PDF and end the stream
-            doc.end();
-
-        } catch (error) {
-            console.error('Error generating PDF:', error);
-            res.status(500).json({ 
-                error: 'An error occurred while generating the PDF',
-                details: error.message,
-                stack: error.stack
-            });
+                // Finalize the PDF and end the stream
+                doc.end();
+            } catch (error) {
+                console.error("Error generating PDF:", error);
+                res.status(500).json({
+                    error: "An error occurred while generating the PDF",
+                    details: error.message,
+                    stack: error.stack,
+                });
+            }
         }
-    });
+    );
 });
-
 
 app.put("/users/:id", async (req, res) => {
     const { id } = req.params;
     const { firstName, lastName, email } = req.body;
-    
+
     try {
         db.run(
             `UPDATE users SET firstName = ?, lastName = ?, email = ? WHERE id = ?`,
@@ -427,42 +571,48 @@ app.put("/users/:id", async (req, res) => {
 app.put("/users/:id/password", async (req, res) => {
     const { id } = req.params;
     const { currentPassword, newPassword } = req.body;
-    
+
     try {
-        db.get("SELECT password FROM users WHERE id = ?", [id], async (err, row) => {
-            if (err) {
-                res.status(400).json({ error: err.message });
-                return;
-            }
-            if (!row) {
-                res.status(404).json({ error: "User not found" });
-                return;
-            }
-            
-            const isMatch = await compare(currentPassword, row.password);
-            
-            if (!isMatch) {
-                res.status(400).json({ error: "Current password is incorrect" });
-                return;
-            }
-            
-            const salt = await genSalt(10);
-            const hashedNewPassword = await hash(newPassword, salt);
-            
-            db.run(
-                `UPDATE users SET password = ? WHERE id = ?`,
-                [hashedNewPassword, id],
-                function (err) {
-                    if (err) {
-                        res.status(400).json({ error: err.message });
-                        return;
-                    }
-                    res.status(200).json({
-                        message: "Password updated successfully",
-                    });
+        db.get(
+            "SELECT password FROM users WHERE id = ?",
+            [id],
+            async (err, row) => {
+                if (err) {
+                    res.status(400).json({ error: err.message });
+                    return;
                 }
-            );
-        });
+                if (!row) {
+                    res.status(404).json({ error: "User not found" });
+                    return;
+                }
+
+                const isMatch = await compare(currentPassword, row.password);
+
+                if (!isMatch) {
+                    res.status(400).json({
+                        error: "Current password is incorrect",
+                    });
+                    return;
+                }
+
+                const salt = await genSalt(10);
+                const hashedNewPassword = await hash(newPassword, salt);
+
+                db.run(
+                    `UPDATE users SET password = ? WHERE id = ?`,
+                    [hashedNewPassword, id],
+                    function (err) {
+                        if (err) {
+                            res.status(400).json({ error: err.message });
+                            return;
+                        }
+                        res.status(200).json({
+                            message: "Password updated successfully",
+                        });
+                    }
+                );
+            }
+        );
     } catch (error) {
         console.log(error.message);
         res.status(500).json({ error: error.message });
