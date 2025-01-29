@@ -277,7 +277,7 @@ export default function Payments() {
                 />
             </div>
 
-            <Card className="h-full bg-background">
+            <Card className="h-full min-h-screen bg-background">
                 <Table>
                     <TableHeader>
                         <TableRow className="bg-secondary">
