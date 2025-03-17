@@ -2,9 +2,11 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import type { PaymentHead, userState, Villas } from "@/types";
 import axios from "axios";
 
+const userData = JSON.parse(localStorage.getItem("user") || "{}");
+
 const initialState: userState = {
-    user: {
-        id: 0,
+    user:  userData ? userData : {
+        id: 0 ,
         email: "",
         firstName: "",
         lastName: "",

@@ -6,13 +6,14 @@ import { db } from "./app.js";
 // const db = new sqlite3.Database('your-database.db');
 
 // Read the Excel file
-const workbook = xlsx.readFile("../maintenance.xlsx");
+const workbook = xlsx.readFile("./Data FGP.xlsx");
 const worksheet = workbook.Sheets[workbook.SheetNames[0]];
 
 // Convert the Excel data to an array of objects
 const data = xlsx.utils.sheet_to_json(worksheet);
 
-// Insert the data into the Villas table
+// console.log(data[1]);
+// // Insert the data into the Villas table
 db.serialize(() => {
     db.run("BEGIN TRANSACTION");
 
@@ -20,20 +21,19 @@ db.serialize(() => {
         const {
             "S.NO": sNo,
             "VILLA NUMBER": villaNumber,
-            "NAME OF RESIDENTS": residentName,
-            "OWNER / TENANT": occupancyType,
+            "OWNER": ownerName,
+            "CURRENT OCCUPANCY": residentName
         } = row;
-        console.log(row);
+        console.log(sNo,villaNumber,ownerName,residentName);
 
+
+        if(residentName == "N/A" || ownerName == "N/A" || villaNumber == "N/A") return;
         db.run(
-            `INSERT INTO Villas (villa_number, resident_name, occupancy_type, Payable) VALUES (?, ?, ?, ?)`,
+            `INSERT INTO Villas (villa_number, resident_name, occupancy_type) VALUES (?, ?, ?)`,
             [
                 villaNumber,
                 residentName == "N/A" ? null : residentName,
-                occupancyType == "N/A"
-                    ? null
-                    : String(occupancyType).toLowerCase(),
-                residentName == "N/A" ? null : 5000,
+                residentName == ownerName ? "owner" : "tenant"
             ],
             (err) => {
                 if (err) {

@@ -56,14 +56,14 @@ export default function AddPaymentDialog({ villaId}: AddPaymentDialogProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (selectedHead && formData.amount > selectedHead.amount) {
-      toast({ 
-        title: "Invalid amount", 
-        description: `Amount cannot exceed ${selectedHead.amount}`,
-        variant: "destructive" 
-      })
-      return
-    }
+    // if (selectedHead && formData.amount > selectedHead.amount) {
+    //   toast({ 
+    //     title: "Invalid amount", 
+    //     description: `Amount cannot exceed ${selectedHead.amount}`,
+    //     variant: "destructive" 
+    //   })
+    //   return
+    // }
 
     try {
       const result = await dispatch(postPayment({
@@ -150,7 +150,7 @@ export default function AddPaymentDialog({ villaId}: AddPaymentDialogProps) {
                 value={formData.amount}
                 onChange={handleInputChange}
                 className="col-span-3"
-                max={selectedHead?.amount}
+                // max={selectedHead?.amount}
                 required
               />
             </div>
@@ -165,6 +165,7 @@ export default function AddPaymentDialog({ villaId}: AddPaymentDialogProps) {
                   onValueChange={(value) =>
                     setFormData(prev => ({ ...prev, paymentMonth: value }))
                   }
+                  required
                 >
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select Month" />

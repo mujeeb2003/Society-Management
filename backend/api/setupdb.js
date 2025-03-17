@@ -23,42 +23,42 @@ export default function setupDB() {
 
     // Create tables
     db.serialize(() => {
-    //     db.run(`CREATE TABLE IF NOT EXISTS users (
-    //     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    //     email TEXT NOT NULL UNIQUE,
-    //     firstName TEXT NOT NULL,
-    //     lastName TEXT NOT NULL,
-    //     password TEXT NOT NULL
-    // )`);
+        db.run(`CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        email TEXT NOT NULL UNIQUE,
+        firstName TEXT NOT NULL,
+        lastName TEXT NOT NULL,
+        password TEXT NOT NULL
+    )`);
 
-    //     db.run(`CREATE TABLE IF NOT EXISTS payment_heads (
-    //     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    //     name TEXT NOT NULL,
-    //     description TEXT,
-    //     amount REAL NOT NULL,
-    //     is_recurring BOOLEAN NOT NULL,
-    //     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    // )`);
+        db.run(`CREATE TABLE IF NOT EXISTS payment_heads (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        description TEXT,
+        amount REAL NOT NULL,
+        is_recurring BOOLEAN NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`);
 
-    //     db.run(`CREATE TABLE IF NOT EXISTS villas (
-    //     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    //     villa_number TEXT NOT NULL UNIQUE,
-    //     resident_name TEXT,
-    //     occupancy_type TEXT CHECK(occupancy_type IN ('owner', 'tenant')),
-    //     Payable REAL
-    // )`);
+        db.run(`CREATE TABLE IF NOT EXISTS villas (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        villa_number TEXT NOT NULL UNIQUE,
+        resident_name TEXT,
+        occupancy_type TEXT CHECK(occupancy_type IN ('owner', 'tenant'))
+    )`);
 
-    //     db.run(`CREATE TABLE IF NOT EXISTS payments (
-    //     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    //     villa_id INTEGER,
-    //     amount REAL NOT NULL,
-    //     payment_date TEXT NOT NULL,
-    //     payment_month TEXT NOT NULL,
-    //     payment_year INTEGER NOT NULL,
-    //     FOREIGN KEY (villa_id) REFERENCES villas (id)
-    // )`);
+        db.run(`CREATE TABLE IF NOT EXISTS payments (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        villa_id INTEGER,
+        amount REAL NOT NULL,
+        payment_date TEXT NOT NULL,
+        payment_month TEXT NOT NULL,
+        payment_year INTEGER NOT NULL,
+        payment_head_id INTEGER,
+        FOREIGN KEY (payment_head_id) REFERENCES payment_heads (id)
+        FOREIGN KEY (villa_id) REFERENCES villas (id)
+    )`);
 
-    db.run(`ALTER TABLE villas DROP COLUMN Payable`);
         // db.run(`ALTER TABLE payments ADD COLUMN payment_head_id INTEGER`)
         // db.run(`ALTER TABLE payments ADD FOREIGN KEY (payment_head_id) REFERENCES payment_heads (id)`)
 
@@ -89,3 +89,5 @@ export default function setupDB() {
         }
     });
 }
+
+// setupDB();

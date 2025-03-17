@@ -41,7 +41,7 @@ export const db = new SQLite3.Database(
 
 app.get("/testing", async (req, res) => {
     try {
-        db.all("select * from payments", [], (err, rows) => {
+        db.all("select * from payments ", [], (err, rows) => {
             if (err) {
                 res.status(400).json({ error: err.message });
                 return;
@@ -156,8 +156,7 @@ app.get("/logout", async (req, res) => {
 });
 
 app.post("/villas", (req, res) => {
-    const { villa_number,resident_name, occupancy_type } =
-        req.body;
+    const { villa_number, resident_name, occupancy_type } = req.body;
     try {
         db.run(
             `INSERT INTO villas (villa_number, resident_name, occupancy_type) VALUES (?, ?, ?)`,
@@ -181,12 +180,11 @@ app.post("/villas", (req, res) => {
 
 app.patch("/villas/:id", (req, res) => {
     const { id } = req.params;
-    const { villa_number, resident_name, occupancy_type } =
-        req.body;
+    const { villa_number, resident_name, occupancy_type } = req.body;
     try {
         db.run(
             `UPDATE villas SET villa_number = ?, resident_name = ?, occupancy_type = ? WHERE id = ?`,
-            [villa_number,resident_name, occupancy_type, id],
+            [villa_number, resident_name, occupancy_type, id],
             function (err) {
                 if (err) {
                     res.status(400).json({ error: err.message });
@@ -307,6 +305,7 @@ app.delete("/payment-heads/:id", (req, res) => {
     }
 });
 
+// Fix for the payments query
 app.get("/payments", (req, res) => {
     try {
         db.all(
@@ -317,11 +316,17 @@ app.get("/payments", (req, res) => {
                 v.resident_name,
                 v.occupancy_type,
                 ph.is_recurring,
+                ph.id AS payment_head_id,
+                ph.name AS payment_head_name,
+                ph.amount AS payment_head_amount,
                 JSON_GROUP_ARRAY(
-                    JSON_OBJECT('latest_payment', p.amount, 'latest_payment_date', p.payment_date,'latest_payment_month',p.payment_month, 'payment_year', p.payment_year, 'payment_id', p.id,
-                    'payment_head_id', ph.id,
-                    'payment_head_name', ph.name,
-                    'payment_head_amount',ph.amount
+                    JSON_OBJECT(
+                        'latest_payment', p.amount, 
+                        'latest_payment_date', p.payment_date,
+                        'latest_payment_month', p.payment_month, 
+                        'payment_year', p.payment_year, 
+                        'payment_id', p.id,
+                        'payment_head_id', p.payment_head_id
                     )
                 ) AS Payments
             FROM villas AS v
@@ -329,7 +334,7 @@ app.get("/payments", (req, res) => {
             LEFT JOIN payments AS p ON v.id = p.villa_id AND ph.id = p.payment_head_id
             GROUP BY v.id, ph.id
             ORDER BY v.villa_number, ph.id
-        `,
+            `,
             [],
             (err, rows) => {
                 if (err) {
@@ -338,13 +343,43 @@ app.get("/payments", (req, res) => {
                 }
 
                 rows.forEach((row) => {
-                    row.Payments = JSON.parse(row.Payments);
-                    row.Payments.sort((a, b) => {
-                        return (
-                            new Date(b.latest_payment_date) -
-                            new Date(a.latest_payment_date)
-                        );
+                    // Parse the JSON array
+                    let payments = JSON.parse(row.Payments);
+                    
+                    // Filter out null entries
+                    payments = payments.filter(p => p.payment_id !== null);
+                    
+                    // Add payment_head_name and payment_head_amount to each payment
+                    payments.forEach(p => {
+                        p.payment_head_name = row.payment_head_name;
+                        p.payment_head_amount = row.payment_head_amount;
                     });
+                    
+                    // Sort by date
+                    payments.sort((a, b) => {
+                        return new Date(b.latest_payment_date) - new Date(a.latest_payment_date);
+                    });
+                    
+                    // If no payments, create a default entry
+                    if (payments.length === 0) {
+                        payments = [{
+                            latest_payment: null,
+                            latest_payment_date: null,
+                            latest_payment_month: null,
+                            payment_year: null,
+                            payment_id: null,
+                            payment_head_id: row.payment_head_id,
+                            payment_head_name: row.payment_head_name,
+                            payment_head_amount: row.payment_head_amount
+                        }];
+                    }
+                    
+                    row.Payments = payments;
+                    
+                    // Remove the extra fields we added
+                    delete row.payment_head_id;
+                    delete row.payment_head_name;
+                    delete row.payment_head_amount;
                 });
 
                 res.status(200).json({
@@ -370,51 +405,142 @@ app.post("/payments", async (req, res) => {
             payment_year,
         } = req.body;
 
-        db.get(
-            `SELECT * FROM payment_heads WHERE id = ?`,
-            [payment_head_id],
-            function (err, paymentHead) {
-                if (err) {
-                    return res.status(400).json({ error: err.message });
-                }
+        db.serialize(() => {
+            db.run("BEGIN TRANSACTION");
 
-                if (!paymentHead) {
-                    return res
-                        .status(400)
-                        .json({ error: "Invalid payment head" });
-                }
+            db.get(
+                `SELECT * FROM payment_heads WHERE id = ?`,
+                [payment_head_id],
+                function (err, paymentHead) {
+                    if (err) {
+                        db.run("ROLLBACK");
+                        return res.status(400).json({ error: err.message });
+                    }
 
-                if (amount > paymentHead.amount) {
-                    res.status(400).json({
-                        error: "Amount exceeds the payment head's amount",
-                    });
-                    return;
-                }
+                    if (!paymentHead) {
+                        db.run("ROLLBACK");
+                        return res
+                            .status(400)
+                            .json({ error: "Invalid payment head" });
+                    }
 
-                db.run(
-                    `INSERT INTO payments (villa_id, payment_head_id, amount, payment_date, payment_month, payment_year) VALUES (?, ?, ?, ?, ?, ?)`,
-                    [
-                        villa_id,
-                        payment_head_id,
-                        amount,
-                        payment_date,
-                        payment_month,
-                        payment_year,
-                    ],
-                    function (err) {
-                        if (err) {
-                            res.status(400).json({ error: err.message });
-                            return;
+                    let remainingAmount = amount;
+                    let currentMonth = payment_month;
+                    let currentYear = parseInt(payment_year);
+
+                    const processPayment = () => {
+                        if (remainingAmount <= 0) {
+                            db.run("COMMIT");
+                            return res.status(200).json({
+                                message: "success",
+                                data: { id: this.lastID },
+                            });
                         }
 
-                        res.status(200).json({
-                            message: "success",
-                            data: { id: this.lastID },
-                        });
-                    }
-                );
-            }
-        );
+                        db.get(
+                            `SELECT * FROM payments WHERE villa_id = ? AND payment_head_id = ? AND payment_month = ? AND payment_year = ?`,
+                            [
+                                villa_id,
+                                payment_head_id,
+                                currentMonth,
+                                currentYear,
+                            ],
+                            (err, existingPayment) => {
+                                if (err) {
+                                    db.run("ROLLBACK");
+                                    return res
+                                        .status(400)
+                                        .json({ error: err.message });
+                                }
+
+                                const paymentAmount = Math.min(
+                                    remainingAmount,
+                                    paymentHead.amount
+                                );
+
+                                if (existingPayment) {
+                                    // Update existing payment
+                                    db.run(
+                                        `UPDATE payments SET amount = ?, payment_date = ? WHERE id = ?`,
+                                        [
+                                            existingPayment.amount + paymentAmount,
+                                            payment_date,
+                                            existingPayment.id,
+                                        ],
+                                        (err) => {
+                                            if (err) {
+                                                db.run("ROLLBACK");
+                                                return res
+                                                    .status(400)
+                                                    .json({
+                                                        error: err.message,
+                                                    });
+                                            }
+                                            remainingAmount -= paymentAmount;
+                                            moveToNextMonth();
+                                        }
+                                    );
+                                } else {
+                                    // Insert new payment
+                                    db.run(
+                                        `INSERT INTO payments (villa_id, payment_head_id, amount, payment_date, payment_month, payment_year) VALUES (?, ?, ?, ?, ?, ?)`,
+                                        [
+                                            villa_id,
+                                            payment_head_id,
+                                            paymentAmount,
+                                            payment_date,
+                                            currentMonth,
+                                            currentYear,
+                                        ],
+                                        function (err) {
+                                            if (err) {
+                                                db.run("ROLLBACK");
+                                                return res
+                                                    .status(400)
+                                                    .json({
+                                                        error: err.message,
+                                                    });
+                                            }
+                                            remainingAmount -= paymentAmount;
+                                            moveToNextMonth();
+                                        }
+                                    );
+                                }
+                            }
+                        );
+                    };
+
+                    const moveToNextMonth = () => {
+                        const months = [
+                            "January",
+                            "February",
+                            "March",
+                            "April",
+                            "May",
+                            "June",
+                            "July",
+                            "August",
+                            "September",
+                            "October",
+                            "November",
+                            "December",
+                        ];
+                        let currentMonthIndex = months.indexOf(currentMonth);
+
+                        if (currentMonthIndex === 11) {
+                            currentMonth = "January";
+                            currentYear++;
+                        } else {
+                            currentMonth = months[currentMonthIndex + 1];
+                        }
+
+                        processPayment();
+                    };
+
+                    processPayment();
+                }
+            );
+        });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -425,15 +551,23 @@ app.get("/backupData", (req, res) => {
         `
         SELECT 
             p.id AS payment_id, 
-            p.villa_id, 
+            p.villa_id,
+            p.payment_head_id, 
             p.amount, 
-            p.payment_date, 
-            v.villa_number, 
-            v.owner_name, 
+            p.payment_date,
+            p.payment_month,
+            p.payment_year,
+            v.villa_number,
             v.resident_name,
-            v.Payable
+            v.occupancy_type,
+            ph.name AS payment_head_name,
+            ph.description AS payment_head_description,
+            ph.amount AS payment_head_amount,
+            ph.is_recurring
         FROM payments p
         JOIN villas v ON p.villa_id = v.id
+        JOIN payment_heads ph ON p.payment_head_id = ph.id
+        ORDER BY p.id
     `,
         [],
         (err, payments) => {
@@ -448,7 +582,7 @@ app.get("/backupData", (req, res) => {
             console.log(`Fetched ${payments.length} payments from database`);
             try {
                 // Create a new PDF document
-                const doc = new PDFDocument({ margin: 30, size: "A4" });
+                const doc = new PDFDocument({ margin: 30, size: "A4", autoFirstPage: true });
 
                 // Set response headers for PDF download
                 res.setHeader("Content-Type", "application/pdf");
@@ -460,69 +594,142 @@ app.get("/backupData", (req, res) => {
                 // Pipe the PDF document to the response
                 doc.pipe(res);
 
-                // Add content to the PDF
+                // Define table properties
+                const headers = [
+                    "Payment ID",
+                    "Villa No",
+                    "Resident",
+                    "Payment Type",
+                    "Amount Paid",
+                    "Pending Amount",
+                    "Date",
+                ];
+                
+                const columnWidth = (doc.page.width - 60) / headers.length;
+                const rowHeight = 30; // Increased row height for better readability
+                const tableTop = 120;
+                const tableLeft = 30;
+                
+                // Function to draw table headers
+                function drawTableHeaders(doc, y) {
+                    doc.font('Helvetica-Bold');
+                    
+                    // Draw header background
+                    doc.fillColor('#f0f0f0')
+                       .rect(tableLeft, y, doc.page.width - 60, rowHeight)
+                       .fill();
+                    
+                    doc.fillColor('#000000');
+                    
+                    // Draw header cells
+                    headers.forEach((header, i) => {
+                        doc.fontSize(10)
+                           .text(
+                                header,
+                                tableLeft + i * columnWidth + 5,
+                                y + 10,
+                                { width: columnWidth - 10, align: "center" }
+                            );
+                    });
+                    
+                    // Draw header lines
+                    doc.strokeColor('#000000');
+                    
+                    // Horizontal lines
+                    doc.moveTo(tableLeft, y)
+                       .lineTo(tableLeft + (columnWidth * headers.length), y)
+                       .stroke();
+                       
+                    doc.moveTo(tableLeft, y + rowHeight)
+                       .lineTo(tableLeft + (columnWidth * headers.length), y + rowHeight)
+                       .stroke();
+                    
+                    // Vertical lines
+                    for (let i = 0; i <= headers.length; i++) {
+                        doc.moveTo(tableLeft + (i * columnWidth), y)
+                           .lineTo(tableLeft + (i * columnWidth), y + rowHeight)
+                           .stroke();
+                    }
+                    
+                    doc.font('Helvetica');
+                    return y + rowHeight;
+                }
+                
+                // Function to draw a table row
+                function drawTableRow(doc, y, rowData) {
+                    // Check if we need a new page
+                    if (y + rowHeight > doc.page.height - 50) {
+                        doc.addPage();
+                        y = tableTop - rowHeight; // Reset y position on new page
+                        drawTableHeaders(doc, y); // Redraw headers on new page
+                        y += rowHeight;
+                    }
+                    
+                    // Draw row cells
+                    rowData.forEach((cell, i) => {
+                        doc.fontSize(9)
+                           .text(
+                                cell !== null && cell !== undefined ? cell.toString() : "",
+                                tableLeft + i * columnWidth + 5,
+                                y + 10,
+                                { width: columnWidth - 10, align: "center" }
+                            );
+                    });
+                    
+                    // Draw row lines
+                    doc.strokeColor('#000000');
+                    
+                    // Horizontal line at bottom of row
+                    doc.moveTo(tableLeft, y + rowHeight)
+                       .lineTo(tableLeft + (columnWidth * headers.length), y + rowHeight)
+                       .stroke();
+                    
+                    // Vertical lines
+                    for (let i = 0; i <= headers.length; i++) {
+                        doc.moveTo(tableLeft + (i * columnWidth), y)
+                           .lineTo(tableLeft + (i * columnWidth), y + rowHeight)
+                           .stroke();
+                    }
+                    
+                    return y + rowHeight;
+                }
+
+                // Add title and date to the first page
                 doc.fontSize(16).text("Payments Report", { align: "center" });
                 doc.fontSize(10).text(
                     `Date: ${new Date().toLocaleDateString()}`,
                     { align: "right" }
                 );
-                doc.moveDown(1);
+                doc.moveDown(2);
 
-                // Create a table
-                const table = {
-                    headers: [
-                        "Payment ID",
-                        "Villa No",
-                        "Owner",
-                        "Resident",
-                        "Amount Paid",
-                        "Pending Amount",
-                        "Date",
-                    ],
-                    rows: payments.map((payment) => [
+                // Initialize y position for the table
+                let y = tableTop;
+                
+                // Draw table headers
+                y = drawTableHeaders(doc, y);
+                
+                // Draw table rows
+                payments.forEach((payment) => {
+                    const rowData = [
                         payment.payment_id,
                         payment.villa_number,
-                        payment.owner_name,
-                        payment.resident_name,
-                        payment.amount,
-                        (payment.Payable - payment.amount) | 0,
-                        payment.payment_date,
-                    ]),
-                };
-
-                // Draw table headers
-                const columnWidth = doc.page.width / table.headers.length - 10;
-                let yPosition = doc.y;
-                table.headers.forEach((header, i) => {
-                    doc.fontSize(12).text(
-                        header,
-                        30 + i * columnWidth,
-                        yPosition,
-                        { width: columnWidth, align: "center" }
-                    );
-                    doc.rect(30 + i * columnWidth, yPosition, columnWidth, 20);
+                        payment.resident_name || "-",
+                        payment.payment_head_name,
+                        `PKR ${payment.amount.toLocaleString()}`,
+                        `PKR ${(payment.payment_head_amount - payment.amount).toLocaleString()}`,
+                        `${new Date(payment.payment_date).toLocaleDateString()} ${payment.payment_month} ${payment.payment_year}`,
+                    ];
+                    
+                    y = drawTableRow(doc, y, rowData);
                 });
-                doc.moveDown(1);
 
-                // Draw table rows
-                table.rows.forEach((row) => {
-                    yPosition = doc.y;
-                    row.forEach((cell, i) => {
-                        doc.fontSize(10).text(
-                            cell ? cell.toString() : "",
-                            30 + i * columnWidth,
-                            yPosition,
-                            { width: columnWidth, align: "center" }
-                        );
-                        doc.rect(
-                            30 + i * columnWidth,
-                            yPosition,
-                            columnWidth,
-                            20
-                        );
-                    });
-                    doc.moveDown(1);
-                });
+                // Add summary at the end
+                doc.moveDown(2);
+                doc.fontSize(12).text("Summary", { align: "left" });
+                doc.fontSize(10).text(`Total Payments: ${payments.length}`);
+                
+                const totalAmount = payments.reduce((sum, payment) => sum + payment.amount, 0);
+                doc.text(`Total Amount Paid: PKR ${totalAmount.toLocaleString()}`);
 
                 // Finalize the PDF and end the stream
                 doc.end();
@@ -542,6 +749,7 @@ app.put("/users/:id", async (req, res) => {
     const { id } = req.params;
     const { firstName, lastName, email } = req.body;
 
+    // cosole.log(id, firstName);
     try {
         db.run(
             `UPDATE users SET firstName = ?, lastName = ?, email = ? WHERE id = ?`,

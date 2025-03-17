@@ -41,18 +41,18 @@ const formatCurrency = (amount: number | null) =>
     amount !== null ? `PKR ${amount.toLocaleString()} /-` : "-";
 
 const months = [
-    "January",
-    "February",
-    "March",
-    "April",
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
     "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
 ];
 
 const COLUMNS_PER_PAGE = 6;
@@ -244,12 +244,27 @@ export default function Payments() {
                         value={selectedYear}
                         onValueChange={setSelectedYear}
                     >
-                        <SelectTrigger className="w-[180px] text-white">
-                            <SelectValue placeholder="Select year" />
+                        <SelectTrigger className="w-[180px] border-white text-white">
+                            <SelectValue placeholder="Select year" className="text-white" />
                         </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="2024">2024</SelectItem>
-                            <SelectItem value="2023">2023</SelectItem>
+                        <SelectContent className="bg-background">
+                            {(() => {
+                                const currentYear = new Date().getFullYear();
+                                const earliestYear = payments.reduce((minYear, payment) => {
+                                    const paymentYears = payment.Payments.map(p => p.payment_year || currentYear);
+                                    return Math.min(minYear, ...paymentYears);
+                                }, currentYear);
+                                
+                                const years = [];
+                                for (let year = currentYear; year >= earliestYear; year--) {
+                                    years.push(
+                                        <SelectItem key={year} value={year.toString()}>
+                                            {year}
+                                        </SelectItem>
+                                    );
+                                }
+                                return years;
+                            })()}
                         </SelectContent>
                     </Select>
                     <Button

@@ -24,3 +24,6 @@ dist-ssr
 *.sw?
 
 maintenance.xlsx
+Data FGP.xlsx
+Data FGP.pdf
+backend\db\society_payments.db
