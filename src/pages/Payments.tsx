@@ -42,17 +42,17 @@ const formatCurrency = (amount: number | null) =>
 
 const months = [
     "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
+    "February",
+    "March",
+    "April",
     "May",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sep",
-    "Oct",
-    "Nov",
-    "Dec",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
 ];
 
 const COLUMNS_PER_PAGE = 6;
@@ -280,6 +280,7 @@ export default function Payments() {
                     >
                         <ChevronRight className="h-4 w-4 text-white" />
                     </Button>
+                    <AddPaymentDialog />
                 </div>
             </div>
 
@@ -332,12 +333,6 @@ export default function Payments() {
                                 rowSpan={3}
                             >
                                 Total Pending
-                            </TableHead>
-                            <TableHead
-                                className="font-semibold text-center w-32 text-white"
-                                rowSpan={3}
-                            >
-                                Actions
                             </TableHead>
                         </TableRow>
                         <TableRow className="bg-secondary">
@@ -504,13 +499,6 @@ export default function Payments() {
                                                   )
                                                 : "-"}
                                         </TableCell>
-                                        <TableCell>
-                                            {payment.resident_name && (
-                                                <AddPaymentDialog
-                                                    villaId={payment.id}
-                                                />
-                                            )}
-                                        </TableCell>
                                     </TableRow>
                                 ))}
                                 {/* Totals Row */}
@@ -565,7 +553,6 @@ export default function Payments() {
                                     <TableCell className="text-white">
                                         {formatCurrency(totals.totalPending)}
                                     </TableCell>
-                                    <TableCell />
                                 </TableRow>
                             </>
                         ) : (
@@ -577,7 +564,7 @@ export default function Payments() {
                                             (head.is_recurring
                                                 ? visibleMonths.length * 2
                                                 : 2),
-                                        5
+                                        4
                                     )}
                                     className="text-center text-white"
                                 >

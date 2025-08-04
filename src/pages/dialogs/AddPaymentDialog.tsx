@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
-import { AppDispatch, RootState, type PaymentHead } from "@/types"
+import { AppDispatch, RootState } from "@/types"
 import { postPayment, getPayments} from "@/redux/user/userSlice"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
@@ -16,22 +16,23 @@ const months = [
 ]
 
 interface AddPaymentDialogProps {
-  villaId: number
-  // paymentHeads: PaymentHead[]
+  // No props needed since we'll select villa from dropdown
 }
 
 interface FormData {
+  villa_id: number
   amount: number
   paymentMonth: string
   paymentYear: string
   payment_head_id: number
 }
 
-export default function AddPaymentDialog({ villaId}: AddPaymentDialogProps) {
+export default function AddPaymentDialog({}: AddPaymentDialogProps) {
   const dispatch = useDispatch<AppDispatch>()
   const { toast } = useToast()
   const [open, setOpen] = useState(false)
   const [formData, setFormData] = useState<FormData>({
+    villa_id: 0,
     amount: 0,
     paymentMonth: "",
     paymentYear: new Date().getFullYear().toString(),
@@ -42,7 +43,7 @@ export default function AddPaymentDialog({ villaId}: AddPaymentDialogProps) {
   
   const { paymentHeads, villas } = useSelector((state: RootState) => state.user)
   const selectedHead = paymentHeads.find(head => head.id === formData.payment_head_id)
-  const selectedVilla = villas.find(villa => villa.id === villaId)
+  const selectedVilla = villas.find(villa => villa.id === formData.villa_id)
 
   // useEffect(() => {
   //   dispatch(getPaymentHeads())
@@ -67,7 +68,7 @@ export default function AddPaymentDialog({ villaId}: AddPaymentDialogProps) {
 
     try {
       const result = await dispatch(postPayment({
-        villa_id: villaId,
+        villa_id: formData.villa_id,
         payment_head_id: formData.payment_head_id,
         amount: formData.amount,
         payment_date: new Date().toISOString().split("T")[0],
@@ -78,14 +79,16 @@ export default function AddPaymentDialog({ villaId}: AddPaymentDialogProps) {
       await dispatch(getPayments())
       
       toast({ title: "Payment added successfully" })
-      
+      console.log("Payment added successfully:", result)
       setReceiptData({
+        payment_id: result.data.id,
         villa_number: selectedVilla?.villa_number,
         resident_name: selectedVilla?.resident_name,
         amount: formData.amount,
         paymentMonth: formData.paymentMonth,
         paymentYear: formData.paymentYear,
-        payment_head: selectedHead?.name
+        payment_head: selectedHead?.name,
+        payment_head_amount: selectedHead?.amount
       })
       setShowReceipt(true)
     } catch (error) {
@@ -96,7 +99,7 @@ export default function AddPaymentDialog({ villaId}: AddPaymentDialogProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline">Add Payment</Button>
+        <Button variant="outline" className="text-white">Add Payment</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
@@ -104,6 +107,38 @@ export default function AddPaymentDialog({ villaId}: AddPaymentDialogProps) {
         </DialogHeader>
         {!showReceipt ? (
           <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="villa" className="text-right">
+                Villa
+              </Label>
+              <div className="col-span-3">
+                <Select
+                  value={formData.villa_id.toString()}
+                  onValueChange={(value) =>
+                    setFormData(prev => ({ ...prev, villa_id: parseInt(value) }))
+                  }
+                  required
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select a Villa" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectLabel>Villa</SelectLabel>
+                      {villas.filter(villa => villa.resident_name).map((villa) => (
+                        <SelectItem
+                          value={villa.id.toString()}
+                          key={villa.id}
+                        >
+                          {villa.villa_number} - {villa.resident_name}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="payment_head" className="text-right">
                 Payment Head
@@ -118,6 +153,7 @@ export default function AddPaymentDialog({ villaId}: AddPaymentDialogProps) {
                       amount: paymentHeads.find(h => h.id === parseInt(value))?.amount || 0
                     }))
                   }
+                  required
                 >
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select a Payment Head" />
@@ -210,6 +246,7 @@ export default function AddPaymentDialog({ villaId}: AddPaymentDialogProps) {
               setShowReceipt(false)
               setOpen(false)
               setFormData({
+                villa_id: 0,
                 amount: 0,
                 paymentMonth: "",
                 paymentYear: new Date().getFullYear().toString(),

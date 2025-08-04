@@ -7,11 +7,12 @@ import Navbar from "./pages/Navbar";
 import Payments from "./pages/Payments";
 import Villas from "./pages/Villas";
 import Settings from "./pages/Settings";
+import PaymentHeadsManagement from "./pages/PaymentHeads";
+import Reports from "./pages/Reports";
 import type { AppDispatch } from "./types";
 import { useDispatch } from "react-redux";
 import { useEffect } from "react";
 import { getPayments, getVillas, updateUser } from "./redux/user/userSlice";
-import PaymentHeadsManagement from "./pages/PaymentHeads";
 
 function App() {
     const dispatch = useDispatch<AppDispatch>();
@@ -51,6 +52,10 @@ function App() {
                                         <Route 
                                             path="/paymentHeads"
                                             element={<PaymentHeadsManagement />}
+                                        />
+                                        <Route 
+                                            path="/reports"
+                                            element={<Reports />}
                                         />
                                         <Route
                                             path="/settings"

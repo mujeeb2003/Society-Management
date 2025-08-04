@@ -69,6 +69,16 @@ function Navbar() {
                     Payment Head
                 </Link>
                 <Link
+                    to="/home/reports"
+                    className={`${
+                        isActive("/home/reports")
+                            ? "text-foreground"
+                            : "text-muted-foreground"
+                    } transition-colors hover:text-foreground`}
+                >
+                    Reports
+                </Link>
+                <Link
                     to="/home/settings"
                     className={`${
                         isActive("/home/settings")
