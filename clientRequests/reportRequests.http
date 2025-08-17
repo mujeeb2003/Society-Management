@@ -1,0 +1,6 @@
+# GET http://localhost:5000/api/reports/balances
+
+GET http://localhost:5000/api/reports/monthly/3/2024
+
+GET http://localhost:5000/api/reports/yearly/2024
+

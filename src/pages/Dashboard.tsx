@@ -1,5 +1,11 @@
-import { ArrowUpRight, HomeIcon as House } from "lucide-react";
-import { Avatar, AvatarImage } from "@/components/ui/avatar";
+import {
+    ArrowUpRight,
+    HomeIcon as House,
+    TrendingUp,
+    TrendingDown,
+    DollarSign,
+} from "lucide-react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,143 +25,130 @@ import {
 } from "@/components/ui/table";
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { AppDispatch, type RootState } from "@/types";
-import { useEffect, useMemo } from "react";
-import { getPaymentHeads, getPayments } from "@/redux/user/userSlice";
+import { AppDispatch, type RootState, type DashboardStats } from "@/types";
+import { useEffect, useState } from "react";
+import { getDashboardStats, getDashboardSummary } from "@/redux/user/userSlice";
+import { useToast } from "@/hooks/use-toast";
 
 export function Dashboard() {
-    const { payments, villas, paymentHeads } = useSelector(
-        (state: RootState) => state.user
+    const { loading } = useSelector((state: RootState) => state.user);
+    const [dashboardData, setDashboardData] = useState<DashboardStats | null>(
+        null
     );
+    const [quickSummary, setQuickSummary] = useState<any>(null);
     const dispatch = useDispatch<AppDispatch>();
-    const currentDate = new Date();
-    const currentMonth = currentDate?.toLocaleString("default", {
-        month: "long",
-    });
-    const currentYear = currentDate.getFullYear()?.toString();
+    const { toast } = useToast();
 
     useEffect(() => {
-        dispatch(getPayments());
-        dispatch(getPaymentHeads());
-    }, [dispatch]);
-
-    const {
-        monthlyReceived,
-        monthlyPending,
-        recentPayments,
-        ownersPendingTotals,
-    } = useMemo(() => {
-        let monthlyReceived = 0;
-        let monthlyPending = 0;
-        const ownerTotals: Record<string, { name: string; amount: number }> =
-            {};
-
-        // First, initialize total pending for each payment head for each villa
-        villas.forEach((villa) => {
-            if (!villa.resident_name) return;
-
-            ownerTotals[villa.resident_name] = {
-                name: villa.resident_name,
-                amount: 0,
-            };
-
-            const villaPayments = payments.find((p) => p.id === villa.id);
-            if (!villaPayments) return;
-
-            // Calculate totals for each payment head
-            paymentHeads.forEach((head) => {
-                const payment = villaPayments.Payments.find(
-                    (p) =>
-                        p.payment_head_id === head.id &&
-                        p.latest_payment_month === currentMonth &&
-                        p.payment_year?.toString() === currentYear
-                );
-
-                if (payment) {
-                    monthlyReceived += payment.latest_payment;
-                    monthlyPending += head.amount - payment.latest_payment;
-                } else if (head.is_recurring) {
-                    // If no payment found for recurring head, add full amount to pending
-                    monthlyPending += head.amount;
+        const fetchDashboardData = async () => {
+            try {
+                // Get comprehensive dashboard stats
+                const statsResponse = await dispatch(
+                    getDashboardStats()
+                ).unwrap();
+                if (statsResponse.success) {
+                    setDashboardData(statsResponse.data);
                 }
 
-                // Calculate total pending for owner (across all months)
-                const allPaymentsForHead = villaPayments.Payments.filter(
-                    (p) => p.payment_head_id === head.id
-                );
-
-                if (head.is_recurring) {
-                    // For recurring payments, calculate pending for all months in the year
-                    const monthsInYear = 12;
-                    const totalExpected = head.amount * monthsInYear;
-                    const totalPaid = allPaymentsForHead.reduce(
-                        (sum, p) =>
-                            sum +
-                            (p.payment_year?.toString() === currentYear
-                                ? p.latest_payment
-                                : 0),
-                        0
-                    );
-                    ownerTotals[villa.resident_name!].amount +=
-                        totalExpected - totalPaid;
-                } else {
-                    // For non-recurring payments, just take the difference
-                    const paid = allPaymentsForHead.reduce(
-                        (sum, p) => sum + p.latest_payment,
-                        0
-                    );
-                    ownerTotals[villa.resident_name!].amount +=
-                        head.amount - paid;
+                // Get quick summary for cards
+                const summaryResponse = await dispatch(
+                    getDashboardSummary()
+                ).unwrap();
+                if (summaryResponse.success) {
+                    setQuickSummary(summaryResponse.data);
                 }
-            });
-        });
-
-        // Get recent payments
-        const allPayments = payments
-            .flatMap((payment) =>
-                payment.Payments.map((p) => ({
-                    ...p,
-                    villa_number: payment.villa_number,
-                    resident_name: payment.resident_name,
-                    payment_date: new Date(p.latest_payment_date),
-                }))
-            )
-            .filter((p) => p.resident_name) // Filter out payments without residents
-            .sort((a, b) => b.payment_date.getTime() - a.payment_date.getTime())
-            .slice(0, 5);
-
-        // Sort owners by pending amount
-        const sortedOwners = Object.values(ownerTotals)
-            .sort((a, b) => b.amount - a.amount)
-            .slice(0, 5);
-
-        return {
-            monthlyReceived,
-            monthlyPending,
-            recentPayments: allPayments,
-            ownersPendingTotals: sortedOwners,
+            } catch (error: any) {
+                toast({
+                    title: "Error",
+                    description: "Failed to load dashboard data",
+                    variant: "destructive",
+                });
+                console.error("Dashboard error:", error);
+            }
         };
-    }, [payments, paymentHeads, villas, currentMonth, currentYear]);
+
+        fetchDashboardData();
+    }, [dispatch, toast]);
+
+    const formatCurrency = (amount: number) => {
+        return `PKR ${amount.toLocaleString()}`;
+    };
+
+    const formatDate = (dateString: string) => {
+        return new Date(dateString).toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+        });
+    };
+
+    // const getStatusBadgeVariant = (status: string) => {
+    //     switch (status) {
+    //         case "PAID":
+    //             return "default";
+    //         case "PARTIAL":
+    //             return "secondary";
+    //         case "NOT_PAID":
+    //             return "destructive";
+    //         default:
+    //             return "outline";
+    //     }
+    // };
+
+    if (loading || !dashboardData || !quickSummary) {
+        return (
+            <div className="flex min-h-screen w-full flex-col mt-0">
+                <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
+                    <div className="grid gap-4 md:grid-cols-2 md:gap-10 lg:grid-cols-4">
+                        {[1, 2, 3, 4].map((i) => (
+                            <Card key={i}>
+                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                    <div className="h-4 w-24 bg-gray-200 rounded animate-pulse"></div>
+                                    <div className="h-4 w-4 bg-gray-200 rounded animate-pulse"></div>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="h-8 w-32 bg-gray-200 rounded animate-pulse mb-1"></div>
+                                    <div className="h-3 w-20 bg-gray-200 rounded animate-pulse"></div>
+                                </CardContent>
+                            </Card>
+                        ))}
+                    </div>
+                </main>
+            </div>
+        );
+    }
 
     return (
         <div className="flex min-h-screen w-full flex-col">
-            <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
-                <div className="grid gap-4 md:grid-cols-2 md:gap-10 lg:grid-cols-3">
+            <main className="flex flex-1 flex-col p-4 md:gap-8 md:px-8">
+                {/* Header */}
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h1 className="text-3xl font-bold">Dashboard</h1>
+                        <p className="text-muted-foreground">
+                            {dashboardData.overview.monthName}{" "}
+                            {dashboardData.overview.currentYear} Overview
+                        </p>
+                    </div>
+                </div>
+
+                {/* Stats Cards */}
+                <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">
-                                Total Payment Received
+                                Monthly Received
                             </CardTitle>
-                            <span className="h-4 w-4 text-muted-foreground">
-                                PKR
-                            </span>
+                            <TrendingUp className="h-4 w-4 text-green-600" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">
-                                PKR {monthlyReceived?.toLocaleString()} /-
+                            <div className="text-2xl font-bold text-green-600">
+                                {formatCurrency(quickSummary.monthlyReceived)}
                             </div>
                             <p className="text-xs text-muted-foreground">
-                                Amount paid this month
+                                Collection Rate:{" "}
+                                {dashboardData.monthlyFinancials.collectionRate}
+                                %
                             </p>
                         </CardContent>
                     </Card>
@@ -163,18 +156,17 @@ export function Dashboard() {
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">
-                                Total Payment Pending
+                                Monthly Pending
                             </CardTitle>
-                            <span className="h-4 w-4 text-muted-foreground">
-                                PKR
-                            </span>
+                            <TrendingDown className="h-4 w-4 text-red-600" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">
-                                PKR {monthlyPending?.toLocaleString()} /-
+                            <div className="text-2xl font-bold text-red-600">
+                                {formatCurrency(quickSummary.monthlyPending)}
                             </div>
                             <p className="text-xs text-muted-foreground">
-                                Amount pending this month
+                                {dashboardData.paymentStats.villasUnpaid} villas
+                                unpaid
                             </p>
                         </CardContent>
                     </Card>
@@ -182,28 +174,188 @@ export function Dashboard() {
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">
-                                Total Houses
+                                Monthly Expenses
                             </CardTitle>
-                            <House className="h-4 w-4 text-muted-foreground" />
+                            <DollarSign className="h-4 w-4 text-orange-600" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">
-                                {villas.length}
+                            <div className="text-2xl font-bold text-orange-600">
+                                {formatCurrency(quickSummary.monthlyExpenses)}
                             </div>
                             <p className="text-xs text-muted-foreground">
-                                Total houses
+                                {dashboardData.expenseStats.expenseTransactions}{" "}
+                                transactions
+                            </p>
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">
+                                Net Balance
+                            </CardTitle>
+                            <House className="h-4 w-4 text-blue-600" />
+                        </CardHeader>
+                        <CardContent>
+                            <div
+                                className={`text-2xl font-bold ${
+                                    quickSummary.netBalance >= 0
+                                        ? "text-green-600"
+                                        : "text-red-600"
+                                }`}
+                            >
+                                {formatCurrency(quickSummary.netBalance)}
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                                {dashboardData.villaStats.totalVillas} total
+                                villas
                             </p>
                         </CardContent>
                     </Card>
                 </div>
 
+                {/* Payment Statistics Cards */}
+                <div className="grid gap-4 md:grid-cols-3">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="text-lg">
+                                Payment Status
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                                        <span className="text-sm">
+                                            Fully Paid
+                                        </span>
+                                    </div>
+                                    <span className="font-semibold">
+                                        {
+                                            dashboardData.paymentStats
+                                                .villasFullyPaid
+                                        }
+                                    </span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                                        <span className="text-sm">
+                                            Partially Paid
+                                        </span>
+                                    </div>
+                                    <span className="font-semibold">
+                                        {
+                                            dashboardData.paymentStats
+                                                .villasPartiallyPaid
+                                        }
+                                    </span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                                        <span className="text-sm">
+                                            Not Paid
+                                        </span>
+                                    </div>
+                                    <span className="font-semibold">
+                                        {
+                                            dashboardData.paymentStats
+                                                .villasUnpaid
+                                        }
+                                    </span>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="text-lg">
+                                Villa Occupancy
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                                        <span className="text-sm">
+                                            Occupied
+                                        </span>
+                                    </div>
+                                    <span className="font-semibold">
+                                        {dashboardData.villaStats
+                                            .occupancyBreakdown.occupied || 0}
+                                    </span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-3 h-3 bg-gray-500 rounded-full"></div>
+                                        <span className="text-sm">Vacant</span>
+                                    </div>
+                                    <span className="font-semibold">
+                                        {dashboardData.villaStats
+                                            .occupancyBreakdown.vacant || 0}
+                                    </span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+                                        <span className="text-sm">Total</span>
+                                    </div>
+                                    <span className="font-semibold">
+                                        {dashboardData.villaStats.totalVillas}
+                                    </span>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="text-lg">
+                                This Month
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-3">
+                                <div className="text-center">
+                                    <div className="text-2xl font-bold text-blue-600">
+                                        {
+                                            dashboardData.paymentStats
+                                                .totalPaymentTransactions
+                                        }
+                                    </div>
+                                    <p className="text-xs text-muted-foreground">
+                                        Payment Transactions
+                                    </p>
+                                </div>
+                                <div className="text-center">
+                                    <div className="text-xl font-semibold text-orange-600">
+                                        {
+                                            dashboardData.expenseStats
+                                                .expenseTransactions
+                                        }
+                                    </div>
+                                    <p className="text-xs text-muted-foreground">
+                                        Expense Transactions
+                                    </p>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+
+                {/* Recent Transactions & Top Pending */}
                 <div className="grid gap-4 md:gap-8 lg:grid-cols-2 xl:grid-cols-3">
                     <Card className="xl:col-span-2">
                         <CardHeader className="flex flex-row items-center">
                             <div className="grid gap-2">
-                                <CardTitle>Payments</CardTitle>
+                                <CardTitle>Recent Payments</CardTitle>
                                 <CardDescription>
-                                    Recent Payments from villa owners
+                                    Latest payments from villa residents
                                 </CardDescription>
                             </div>
                             <Button asChild size="sm" className="ml-auto gap-1">
@@ -218,52 +370,49 @@ export function Dashboard() {
                                 <TableHeader>
                                     <TableRow>
                                         <TableHead>Resident</TableHead>
-                                        <TableHead>House No.</TableHead>
-                                        <TableHead className="">
-                                            Status
-                                        </TableHead>
-                                        <TableHead className="">Date</TableHead>
+                                        <TableHead>Villa</TableHead>
+                                        <TableHead>Category</TableHead>
+                                        <TableHead>Date</TableHead>
                                         <TableHead className="text-right">
                                             Amount
                                         </TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {recentPayments.map(
-                                        (payment, index) =>
-                                            payment.latest_payment && (
-                                                <TableRow key={index}>
-                                                    <TableCell className="py-5">
-                                                        <div className="font-medium">
-                                                            {
-                                                                payment.resident_name
-                                                            }
-                                                        </div>
-                                                    </TableCell>
-                                                    <TableCell className="py-5">
-                                                        <div className="font-medium">
-                                                            {
-                                                                payment.villa_number
-                                                            }
-                                                        </div>
-                                                    </TableCell>
-                                                    <TableCell className="py-5">
-                                                        <Badge
-                                                            className="text-xs"
-                                                            variant="outline"
-                                                        >
-                                                            Paid
-                                                        </Badge>
-                                                    </TableCell>
-                                                    <TableCell className="py-5">
-                                                        {payment.payment_date.toLocaleDateString()}
-                                                    </TableCell>
-                                                    <TableCell className="text-right">
-                                                        PKR{" "}
-                                                        {payment.latest_payment?.toLocaleString()}
-                                                    </TableCell>
-                                                </TableRow>
-                                            )
+                                    {dashboardData.recentPayments.map(
+                                        (payment) => (
+                                            <TableRow key={payment.id}>
+                                                <TableCell>
+                                                    <div className="font-medium">
+                                                        {payment.residentName ||
+                                                            "N/A"}
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <div className="font-medium">
+                                                        {payment.villaNumber}
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Badge
+                                                        variant="outline"
+                                                        className="text-xs"
+                                                    >
+                                                        {payment.categoryName}
+                                                    </Badge>
+                                                </TableCell>
+                                                <TableCell>
+                                                    {formatDate(
+                                                        payment.paymentDate
+                                                    )}
+                                                </TableCell>
+                                                <TableCell className="text-right font-medium">
+                                                    {formatCurrency(
+                                                        payment.receivedAmount
+                                                    )}
+                                                </TableCell>
+                                            </TableRow>
+                                        )
                                     )}
                                 </TableBody>
                             </Table>
@@ -272,36 +421,115 @@ export function Dashboard() {
 
                     <Card>
                         <CardHeader>
-                            <CardTitle>Owners list</CardTitle>
+                            <CardTitle>Top Pending Payments</CardTitle>
                             <CardDescription>
-                                Top 5 owners with most outstanding payments
+                                Villas with highest outstanding amounts
                             </CardDescription>
                         </CardHeader>
-                        <CardContent className="grid gap-8">
-                            {ownersPendingTotals.map((owner) => (
+                        <CardContent className="grid gap-6">
+                            {dashboardData.topPendingVillas.map((villa) => (
                                 <div
                                     className="flex items-center gap-4"
-                                    key={owner.name}
+                                    key={`${villa.villaNumber}-${villa.residentName}`}
                                 >
                                     <Avatar className="hidden h-9 w-9 sm:flex">
                                         <AvatarImage
                                             src="/avatars/01.png"
                                             alt="Avatar"
                                         />
+                                        <AvatarFallback>
+                                            {villa.residentName?.charAt(0) ||
+                                                villa.villaNumber.charAt(0)}
+                                        </AvatarFallback>
                                     </Avatar>
                                     <div className="grid gap-1">
                                         <p className="text-sm font-medium leading-none">
-                                            {owner.name}
+                                            {villa.residentName || "N/A"}
+                                        </p>
+                                        <p className="text-xs text-muted-foreground">
+                                            Villa {villa.villaNumber}
                                         </p>
                                     </div>
-                                    <div className="ml-auto font-medium">
-                                        +PKR {owner.amount?.toLocaleString()}
+                                    <div className="ml-auto font-medium text-red-600">
+                                        +{formatCurrency(villa.pendingAmount)}
                                     </div>
                                 </div>
                             ))}
+                            {dashboardData.topPendingVillas.length === 0 && (
+                                <div className="text-center text-muted-foreground py-4">
+                                    No pending payments found
+                                </div>
+                            )}
                         </CardContent>
                     </Card>
                 </div>
+
+                {/* Payment Category Breakdown */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Payment Category Performance</CardTitle>
+                        <CardDescription>
+                            Collection rates by payment category
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Category</TableHead>
+                                    <TableHead>Expected</TableHead>
+                                    <TableHead>Received</TableHead>
+                                    <TableHead>Transactions</TableHead>
+                                    <TableHead className="text-right">
+                                        Collection Rate
+                                    </TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {dashboardData.categoryBreakdown.map(
+                                    (category) => (
+                                        <TableRow key={category.categoryName}>
+                                            <TableCell className="font-medium">
+                                                {category.categoryName}
+                                            </TableCell>
+                                            <TableCell>
+                                                {formatCurrency(
+                                                    category.totalReceivable
+                                                )}
+                                            </TableCell>
+                                            <TableCell>
+                                                {formatCurrency(
+                                                    category.totalReceived
+                                                )}
+                                            </TableCell>
+                                            <TableCell>
+                                                {category.transactionCount}
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <Badge
+                                                    variant={
+                                                        category.collectionRate >=
+                                                        80
+                                                            ? "default"
+                                                            : category.collectionRate >=
+                                                              60
+                                                            ? "secondary"
+                                                            : "destructive"
+                                                    }
+                                                >
+                                                    {category.collectionRate.toFixed(
+                                                        1
+                                                    )}
+                                                    %
+                                                </Badge>
+                                            </TableCell>
+                                        </TableRow>
+                                    )
+                                )}
+                            </TableBody>
+                        </Table>
+                    </CardContent>
+                </Card>
             </main>
         </div>
     );

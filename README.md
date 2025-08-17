@@ -1,51 +1,80 @@
+
 # Society Management App
 
 ## Overview
-The Society Management App is designed to help society heads manage monthly payments and house details efficiently. This application aims to streamline the administrative tasks involved in managing a society.
+Society Management App is a comprehensive platform designed for society heads and management teams to efficiently handle all aspects of residential community administration. It streamlines payment collection, resident management, expense tracking, and reporting, providing a seamless experience for both managers and residents.
 
 ![Society Management App](image-1.png)
 
+## Business Value
+Society Management App is built for real-world society management, not just as a personal project. It empowers society heads and committees to:
+
+- **Automate Payment Collection:** Track monthly, one-time, and pending payments with instant receipts and downloadable reports.
+- **Increase Transparency:** Provide residents and management with clear payment histories, outstanding dues, and financial summaries.
+- **Reduce Administrative Overhead:** Replace manual registers and spreadsheets with a unified digital solution.
+- **Enable Data-Driven Decisions:** Use analytics and reports to plan budgets, monitor cash flow, and identify trends in expenses and collections.
+- **Enhance Resident Experience:** Offer a modern, easy-to-use interface for payment, receipts, and communication.
+- **Support Audits and Compliance:** Generate professional monthly and yearly reports for board meetings and regulatory needs.
+
 ## Features
-- **User-Friendly Dashboard**: A comprehensive dashboard that shows analytics and important information.
-- **Monthly Payments Management**: Track and manage monthly payments from residents.
-  - **Payment History**: View the history of each house, including all previous payments and total outstanding payments.
-  - **Receipt Download**: Download a receipt for each payment added.
-- **House Details Management**: Maintain detailed records of each house in the society.
-- **Resident Management**: Add, update, and remove resident information with ease.
-- **Event Management**: Organize and manage society events and meetings.
-- **Document Storage**: Securely store and access important documents related to the society.
-- **Data Security**: Ensure data security with robust authentication and secure data storage practices.
-- **Settings**: Update user information such as first name, last name, email, and password.
-  - **PDF Export**: Option to get a PDF of all payments to date.
+- **Dashboard & Analytics:** Real-time overview of payments, expenses, balances, and resident activity.
+- **Payments Management:**
+  - Track monthly, one-time, and cross-month payments.
+  - Add payments for previous months (with current date recorded).
+  - Download PDF receipts for every payment.
+  - View payment history and outstanding dues per villa.
+- **Villa & Resident Management:**
+  - Add, update, and manage villa details and resident information.
+  - Mark villas as vacant or occupied.
+- **Expense Tracking:**
+  - Record expenses with category, amount, and description.
+  - View monthly expense breakdowns and statistics.
+- **Reports & Export:**
+  - Generate monthly financial reports with villa-wise payment status, expense details, and cross-month payment summaries.
+  - Export reports to Excel for further analysis.
+- **Settings & Security:**
+  - Update user profile and password.
+  - Secure authentication and data protection.
 
 ## Technology Stack
-- **Frontend**: Built using Shadcn UI for a modern and responsive user interface.
-  - **React**: For building the user interface.
-  - **Redux**: For state management.
-- **Backend**: Node.js and Express for robust server-side operations.
-  - **SQLite**: For efficient data storage and retrieval.
-- **Authentication**: Bcrypt to ensure password hash.
+- **Frontend:**
+  - React (TypeScript)
+  - Shadcn UI (modern, responsive components)
+  - Redux Toolkit (state management)
+- **Backend:**
+  - Node.js & Express
+  - Prisma ORM
+  - MySQL
+- **Authentication:**
+  - Bcrypt (secure password hashing)
+- **Reporting & Export:**
+  - ExcelJS (professional Excel exports)
+  - PDF receipts (react-pdf)
 
 ## Installation
 1. Clone the repository:
-  ```sh
-  git clone https://github.com/mujeeb2003/Society-Management.git
-  ```
+   ```sh
+   git clone https://github.com/mujeeb2003/Society-Management.git
+   ```
 2. Navigate to the project directory:
-  ```sh
-  cd Society-Management
-  ```
+   ```sh
+   cd Society-Management
+   ```
 3. Install dependencies:
-  ```sh
-  npm install
-  ```
+   ```sh
+   npm install
+   ```
 
 ## Usage
-1. Start the application:
-  ```sh
-  npm start 
-  ```
-2. Open your browser and navigate to `http://localhost:5173`.
+1. Start the backend server:
+   ```sh
+   npm run server
+   ```
+2. Start the frontend:
+   ```sh
+   npm run dev
+   ```
+3. Open your browser and navigate to `http://localhost:5173`.
 
 ## Contributing
 Contributions are welcome! Please fork the repository and create a pull request with your changes.

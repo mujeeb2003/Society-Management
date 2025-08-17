@@ -1,0 +1,42 @@
+# POST http://localhost:5000/api/users/register HTTP/1.1
+# content-type: application/json
+# {
+#     "firstName": "Mujeeb",
+#     "lastName": "Ur Rehman",
+#     "email": "mrehman0501305@gmail.com",
+#     "password": "Mrehman@12"
+# }
+
+# POST http://localhost:5000/api/users/login HTTP/1.1
+# content-type: application/json
+
+# {
+#     "email": "mrehman0501305@gmail.com",
+#     "password": "Mrehman@12"
+# }   
+
+# GET http://localhost:5000/api/users/logout HTTP/1.1
+# content-type: application/json
+
+# GET http://localhost:5000/api/users/1 HTTP/1.1
+# content-type: application/json
+
+# PUT  http://localhost:5000/api/users/1 HTTP/1.1
+# content-type: application/json
+
+# {
+#     "firstName": "Mujeeb",
+#     "lastName": "Rehman",
+#     "email": "mrehman0501305@gmail.com"
+# }
+
+# PUT  http://localhost:5000/api/users/1/password HTTP/1.1
+# content-type: application/json
+
+# {
+#     "currentPassword": "Mrehman@123",
+#     "newPassword": "password123"
+
+# }
+
+

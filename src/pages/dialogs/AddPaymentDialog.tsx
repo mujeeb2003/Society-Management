@@ -1,263 +1,562 @@
-import { useState } from "react"
-import { useDispatch, useSelector } from "react-redux"
-import { AppDispatch, RootState } from "@/types"
-import { postPayment, getPayments} from "@/redux/user/userSlice"
-import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from "@/components/ui/select"
-import { useToast } from "@/hooks/use-toast"
-import { Label } from "@/components/ui/label"
-import PaymentReceipt from "@/components/PaymentReceipt"
+import { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/types";
+import { postPayment, getPayments, getVillas } from "@/redux/user/userSlice";
+import { Button } from "@/components/ui/button";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+    SelectGroup,
+    SelectLabel,
+} from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+import { Label } from "@/components/ui/label";
+import PaymentReceipt from "@/components/PaymentReceipt";
+// import PaymentReceipt from "@/components/PaymentReceipt";
 
 const months = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December"
-]
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+];
 
-interface AddPaymentDialogProps {
-  // No props needed since we'll select villa from dropdown
-}
+const monthNameToNumber: { [key: string]: number } = {
+    January: 1,
+    February: 2,
+    March: 3,
+    April: 4,
+    May: 5,
+    June: 6,
+    July: 7,
+    August: 8,
+    September: 9,
+    October: 10,
+    November: 11,
+    December: 12,
+};
 
 interface FormData {
-  villa_id: number
-  amount: number
-  paymentMonth: string
-  paymentYear: string
-  payment_head_id: number
+    villaId: number;
+    categoryId: number;
+    receivableAmount: number;
+    receivedAmount: number;
+    paymentMonth: string;
+    paymentYear: string;
+    paymentMethod: string;
+    notes: string;
 }
 
-export default function AddPaymentDialog({}: AddPaymentDialogProps) {
-  const dispatch = useDispatch<AppDispatch>()
-  const { toast } = useToast()
-  const [open, setOpen] = useState(false)
-  const [formData, setFormData] = useState<FormData>({
-    villa_id: 0,
-    amount: 0,
-    paymentMonth: "",
-    paymentYear: new Date().getFullYear().toString(),
-    payment_head_id: 0
-  })
-  const [showReceipt, setShowReceipt] = useState(false)
-  const [receiptData, setReceiptData] = useState<any>(null)
-  
-  const { paymentHeads, villas } = useSelector((state: RootState) => state.user)
-  const selectedHead = paymentHeads.find(head => head.id === formData.payment_head_id)
-  const selectedVilla = villas.find(villa => villa.id === formData.villa_id)
+export default function AddPaymentDialog() {
+    const dispatch = useDispatch<AppDispatch>();
+    const { toast } = useToast();
+    const [open, setOpen] = useState(false);
+    const [formData, setFormData] = useState<FormData>({
+        villaId: 0,
+        categoryId: 0,
+        receivableAmount: 0,
+        receivedAmount: 0,
+        paymentMonth: "",
+        paymentYear: new Date().getFullYear().toString(),
+        paymentMethod: "CASH",
+        notes: "",
+    });
+    const [showReceipt, setShowReceipt] = useState(false);
+    const [receiptData, setReceiptData] = useState<any>(null);
 
-  // useEffect(() => {
-  //   dispatch(getPaymentHeads())
-  // }, [dispatch])
+    const { paymentCategories, villas } = useSelector(
+        (state: RootState) => state.user
+    );
+    const selectedCategory = paymentCategories.find(
+        (cat) => cat.id === formData.categoryId
+    );
+    const selectedVilla = villas.find((villa) => villa.id === formData.villaId);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
-  }
+    useEffect(() => {
+        dispatch(getVillas());
+    }, [dispatch]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    // if (selectedHead && formData.amount > selectedHead.amount) {
-    //   toast({ 
-    //     title: "Invalid amount", 
-    //     description: `Amount cannot exceed ${selectedHead.amount}`,
-    //     variant: "destructive" 
-    //   })
-    //   return
-    // }
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = e.target;
+        setFormData((prev) => ({ ...prev, [name]: value }));
+    };
 
-    try {
-      const result = await dispatch(postPayment({
-        villa_id: formData.villa_id,
-        payment_head_id: formData.payment_head_id,
-        amount: formData.amount,
-        payment_date: new Date().toISOString().split("T")[0],
-        payment_month: formData.paymentMonth,
-        payment_year: formData.paymentYear,
-      })).unwrap()
-      
-      await dispatch(getPayments())
-      
-      toast({ title: "Payment added successfully" })
-      console.log("Payment added successfully:", result)
-      setReceiptData({
-        payment_id: result.data.id,
-        villa_number: selectedVilla?.villa_number,
-        resident_name: selectedVilla?.resident_name,
-        amount: formData.amount,
-        paymentMonth: formData.paymentMonth,
-        paymentYear: formData.paymentYear,
-        payment_head: selectedHead?.name,
-        payment_head_amount: selectedHead?.amount
-      })
-      setShowReceipt(true)
-    } catch (error) {
-      toast({ title: "Failed to add payment", variant: "destructive" })
-    }
-  }
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
 
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" className="text-white">Add Payment</Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle className="text-xl font-bold">Add Payment</DialogTitle>
-        </DialogHeader>
-        {!showReceipt ? (
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="villa" className="text-right">
-                Villa
-              </Label>
-              <div className="col-span-3">
-                <Select
-                  value={formData.villa_id.toString()}
-                  onValueChange={(value) =>
-                    setFormData(prev => ({ ...prev, villa_id: parseInt(value) }))
-                  }
-                  required
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select a Villa" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectLabel>Villa</SelectLabel>
-                      {villas.filter(villa => villa.resident_name).map((villa) => (
-                        <SelectItem
-                          value={villa.id.toString()}
-                          key={villa.id}
+        // ✅ Basic validation
+        if (formData.villaId === 0) {
+            toast({
+                title: "Validation Error",
+                description: "Please select a villa",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        if (formData.categoryId === 0) {
+            toast({
+                title: "Validation Error",
+                description: "Please select a payment category",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        if (formData.receivedAmount > formData.receivableAmount) {
+            toast({
+                title: "Invalid amount",
+                description: `Received amount cannot exceed receivable amount`,
+                variant: "destructive",
+            });
+            return;
+        }
+
+        try {
+            // ✅ Prepare payment data for new backend structure
+            const paymentData = {
+                villaId: formData.villaId,
+                categoryId: formData.categoryId,
+                receivableAmount: parseFloat(
+                    formData.receivableAmount.toString()
+                ),
+                receivedAmount: parseFloat(formData.receivedAmount.toString()),
+                paymentDate: new Date().toISOString(),
+                paymentMonth: monthNameToNumber[formData.paymentMonth],
+                paymentYear: parseInt(formData.paymentYear),
+                paymentMethod: formData.paymentMethod,
+                notes:
+                    formData.notes ||
+                    `${selectedCategory?.name} payment for ${formData.paymentMonth}-${formData.paymentYear}`,
+            };
+
+            console.log("Sending payment data:", paymentData);
+
+            const result = await dispatch(postPayment(paymentData)).unwrap();
+
+            // ✅ Refresh payments data
+            await dispatch(getPayments());
+
+            toast({
+                title: "Success",
+                description: "Payment added successfully",
+                variant: "default",
+            });
+
+            console.log("Payment added successfully:", result);
+
+            // ✅ Prepare receipt data
+            setReceiptData({
+                payment_id: result.data?.id || Date.now(),
+                villa_number: selectedVilla?.villaNumber,
+                resident_name: selectedVilla?.residentName,
+                receivable_amount: formData.receivableAmount,
+                received_amount: formData.receivedAmount,
+                pending_amount:
+                    formData.receivableAmount - formData.receivedAmount,
+                paymentMonth: formData.paymentMonth,
+                paymentYear: formData.paymentYear,
+                payment_category: selectedCategory?.name,
+                payment_method: formData.paymentMethod,
+                notes: formData.notes,
+                payment_date: new Date().toLocaleDateString(),
+            });
+            setShowReceipt(true);
+        } catch (error: any) {
+            console.error("Payment creation error:", error);
+            toast({
+                title: "Error",
+                description: error?.message || "Failed to add payment",
+                variant: "destructive",
+            });
+        }
+    };
+
+    const resetForm = () => {
+        setFormData({
+            villaId: 0,
+            categoryId: 0,
+            receivableAmount: 0,
+            receivedAmount: 0,
+            paymentMonth: "",
+            paymentYear: new Date().getFullYear().toString(),
+            paymentMethod: "CASH",
+            notes: "",
+        });
+        setShowReceipt(false);
+        setReceiptData(null);
+    };
+
+    return (
+        <Dialog
+            open={open}
+            onOpenChange={(newOpen) => {
+                setOpen(newOpen);
+                if (!newOpen) {
+                    resetForm();
+                }
+            }}
+            
+        >
+            <DialogTrigger asChild>
+                <Button variant="outline" className="border-white">
+                    Add Payment
+                </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[500px]">
+                <DialogHeader>
+                    <DialogTitle className="text-xl font-bold">
+                        Add Payment
+                    </DialogTitle>
+                </DialogHeader>
+
+                {!showReceipt ? (
+                    <form onSubmit={handleSubmit} className="space-y-4 ">
+                        {/* ✅ Villa Selection */}
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="villa" className="text-right">
+                                Villa
+                            </Label>
+                            <div className="col-span-3">
+                                <Select
+                                    value={formData.villaId.toString()}
+                                    onValueChange={(value) =>
+                                        setFormData((prev) => ({
+                                            ...prev,
+                                            villaId: parseInt(value),
+                                        }))
+                                    }
+                                    required
+                                >
+                                    <SelectTrigger className="w-full">
+                                        <SelectValue placeholder="Select a Villa" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectGroup>
+                                            <SelectLabel>
+                                                Occupied Villas
+                                            </SelectLabel>
+                                            {villas
+                                                .filter(
+                                                    (villa) =>
+                                                        villa.residentName &&
+                                                        villa.residentName.trim() !==
+                                                            ""
+                                                )
+                                                .map((villa) => (
+                                                    <SelectItem
+                                                        value={villa.id.toString()}
+                                                        key={villa.id}
+                                                    >
+                                                        {villa.villaNumber} -{" "}
+                                                        {villa.residentName}
+                                                    </SelectItem>
+                                                ))}
+                                        </SelectGroup>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+
+                        {/* ✅ Payment Category Selection */}
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="category" className="text-right">
+                                Payment Category
+                            </Label>
+                            <div className="col-span-3">
+                                <Select
+                                    value={formData.categoryId.toString()}
+                                    onValueChange={(value) =>
+                                        setFormData((prev) => ({
+                                            ...prev,
+                                            categoryId: parseInt(value),
+                                        }))
+                                    }
+                                    required
+                                >
+                                    <SelectTrigger className="w-full">
+                                        <SelectValue placeholder="Select a Payment Category" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectGroup>
+                                            <SelectLabel>
+                                                Recurring Categories
+                                            </SelectLabel>
+                                            {paymentCategories
+                                                .filter(
+                                                    (cat) => cat.isRecurring
+                                                )
+                                                .map((category) => (
+                                                    <SelectItem
+                                                        value={category.id.toString()}
+                                                        key={category.id}
+                                                    >
+                                                        {category.name}
+                                                    </SelectItem>
+                                                ))}
+                                        </SelectGroup>
+                                        <SelectGroup>
+                                            <SelectLabel>
+                                                One-time Categories
+                                            </SelectLabel>
+                                            {paymentCategories
+                                                .filter(
+                                                    (cat) => !cat.isRecurring
+                                                )
+                                                .map((category) => (
+                                                    <SelectItem
+                                                        value={category.id.toString()}
+                                                        key={category.id}
+                                                    >
+                                                        {category.name}
+                                                    </SelectItem>
+                                                ))}
+                                        </SelectGroup>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+
+                        {/* ✅ Receivable Amount */}
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label
+                                htmlFor="receivableAmount"
+                                className="text-right"
+                            >
+                                Receivable Amount
+                            </Label>
+                            <Input
+                                id="receivableAmount"
+                                name="receivableAmount"
+                                type="number"
+                                value={formData.receivableAmount}
+                                onChange={handleInputChange}
+                                className="col-span-3"
+                                min="0"
+                                step="0.01"
+                                placeholder="Enter total receivable amount"
+                                required
+                            />
+                        </div>
+
+                        {/* ✅ Received Amount */}
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label
+                                htmlFor="receivedAmount"
+                                className="text-right"
+                            >
+                                Received Amount
+                            </Label>
+                            <Input
+                                id="receivedAmount"
+                                name="receivedAmount"
+                                type="number"
+                                value={formData.receivedAmount}
+                                onChange={handleInputChange}
+                                className="col-span-3"
+                                min="0"
+                                max={formData.receivableAmount}
+                                step="0.01"
+                                placeholder="Enter amount received"
+                                required
+                            />
+                        </div>
+
+                        {/* ✅ Payment Month */}
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="month" className="text-right">
+                                Month
+                            </Label>
+                            <div className="col-span-3">
+                                <Select
+                                    value={formData.paymentMonth}
+                                    onValueChange={(value) =>
+                                        setFormData((prev) => ({
+                                            ...prev,
+                                            paymentMonth: value,
+                                        }))
+                                    }
+                                    required
+                                >
+                                    <SelectTrigger className="w-full">
+                                        <SelectValue placeholder="Select Month" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectGroup>
+                                            <SelectLabel>Month</SelectLabel>
+                                            {months.map((month) => (
+                                                <SelectItem
+                                                    value={month}
+                                                    key={month}
+                                                >
+                                                    {month}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectGroup>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+
+                        {/* ✅ Payment Year */}
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="paymentYear" className="text-right">
+                                Year
+                            </Label>
+                            <Input
+                                id="paymentYear"
+                                name="paymentYear"
+                                type="number"
+                                value={formData.paymentYear}
+                                onChange={handleInputChange}
+                                className="col-span-3"
+                                min={2023}
+                                max={2030}
+                                required
+                            />
+                        </div>
+
+                        {/* ✅ Payment Method */}
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label
+                                htmlFor="paymentMethod"
+                                className="text-right"
+                            >
+                                Payment Method
+                            </Label>
+                            <div className="col-span-3">
+                                <Select
+                                    value={formData.paymentMethod}
+                                    onValueChange={(value) =>
+                                        setFormData((prev) => ({
+                                            ...prev,
+                                            paymentMethod: value,
+                                        }))
+                                    }
+                                >
+                                    <SelectTrigger className="w-full">
+                                        <SelectValue placeholder="Select Payment Method" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectGroup>
+                                            <SelectLabel>
+                                                Payment Method
+                                            </SelectLabel>
+                                            <SelectItem value="CASH">
+                                                Cash
+                                            </SelectItem>
+                                            <SelectItem value="BANK_TRANSFER">
+                                                Bank Transfer
+                                            </SelectItem>
+                                            <SelectItem value="CHEQUE">
+                                                Cheque
+                                            </SelectItem>
+                                            <SelectItem value="ONLINE">
+                                                Online Payment
+                                            </SelectItem>
+                                        </SelectGroup>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+
+                        {/* ✅ Notes (Optional) */}
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="notes" className="text-right">
+                                Notes
+                            </Label>
+                            <Input
+                                id="notes"
+                                name="notes"
+                                type="text"
+                                value={formData.notes}
+                                onChange={handleInputChange}
+                                className="col-span-3"
+                                placeholder="Optional notes"
+                            />
+                        </div>
+
+                        {/* ✅ Summary Display */}
+                        {formData.receivableAmount > 0 && (
+                            <div className="bg-secondary p-4 rounded-lg">
+                                <h3 className="font-semibold mb-2">
+                                    Payment Summary
+                                </h3>
+                                <div className="space-y-1 text-sm">
+                                    <div className="flex justify-between">
+                                        <span>Receivable Amount:</span>
+                                        <span>
+                                            PKR{" "}
+                                            {formData.receivableAmount.toLocaleString()}
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span>Received Amount:</span>
+                                        <span>
+                                            PKR{" "}
+                                            {formData.receivedAmount.toLocaleString()}
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between font-semibold border-t pt-1">
+                                        <span>Pending Amount:</span>
+                                        <span
+                                            className={`${
+                                                formData.receivableAmount -
+                                                    formData.receivedAmount >
+                                                0
+                                                    ? "text-red-500"
+                                                    : "text-green-500"
+                                            }`}
+                                        >
+                                            PKR{" "}
+                                            {(
+                                                formData.receivableAmount -
+                                                formData.receivedAmount
+                                            ).toLocaleString()}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        <Button type="submit" className="w-full">
+                            Add Payment
+                        </Button>
+                    </form>
+                ) : (
+                    <div className="space-y-4">
+                        <PaymentReceipt paymentData={receiptData} />
+                        <Button
+                            onClick={() => {
+                                setOpen(false);
+                                resetForm();
+                            }}
+                            className="w-full"
                         >
-                          {villa.villa_number} - {villa.resident_name}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="payment_head" className="text-right">
-                Payment Head
-              </Label>
-              <div className="col-span-3">
-                <Select
-                  value={formData.payment_head_id.toString()}
-                  onValueChange={(value) =>
-                    setFormData(prev => ({
-                      ...prev,
-                      payment_head_id: parseInt(value),
-                      amount: paymentHeads.find(h => h.id === parseInt(value))?.amount || 0
-                    }))
-                  }
-                  required
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select a Payment Head" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectLabel>Payment Head</SelectLabel>
-                      {paymentHeads.map((head) => (
-                        <SelectItem
-                          value={head.id.toString()}
-                          key={head.id}
-                        >
-                          {head.name} - PKR {head.amount}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="amount" className="text-right">
-                Amount
-              </Label>
-              <Input
-                id="amount"
-                name="amount"
-                type="number"
-                value={formData.amount}
-                onChange={handleInputChange}
-                className="col-span-3"
-                // max={selectedHead?.amount}
-                required
-              />
-            </div>
-
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="month" className="text-right">
-                Month
-              </Label>
-              <div className="col-span-3">
-                <Select
-                  value={formData.paymentMonth}
-                  onValueChange={(value) =>
-                    setFormData(prev => ({ ...prev, paymentMonth: value }))
-                  }
-                  required
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select Month" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectLabel>Month</SelectLabel>
-                      {months.map((month) => (
-                        <SelectItem value={month} key={month}>
-                          {month}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="paymentYear" className="text-right">
-                Year
-              </Label>
-              <Input
-                id="paymentYear"
-                name="paymentYear"
-                type="number"
-                value={formData.paymentYear}
-                onChange={handleInputChange}
-                className="col-span-3"
-                min={2023}
-                max={2025}
-                required
-              />
-            </div>
-
-            <Button type="submit" className="w-full">Add Payment</Button>
-          </form>
-        ) : (
-          <div className="space-y-4">
-            <PaymentReceipt paymentData={receiptData} />
-            <Button onClick={() => {
-              setShowReceipt(false)
-              setOpen(false)
-              setFormData({
-                villa_id: 0,
-                amount: 0,
-                paymentMonth: "",
-                paymentYear: new Date().getFullYear().toString(),
-                payment_head_id: 0
-              })
-            }} className="w-full">
-              Close
-            </Button>
-          </div>
-        )}
-      </DialogContent>
-    </Dialog>
-  )
+                            Close
+                        </Button>
+                    </div>
+                )}
+            </DialogContent>
+        </Dialog>
+    );
 }

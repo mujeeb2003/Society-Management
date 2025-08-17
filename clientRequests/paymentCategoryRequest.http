@@ -1,0 +1,23 @@
+# GET http://localhost:5000/api/payment-categories/
+
+# GET http://localhost:5000/api/payment-categories/1
+
+# POST http://localhost:5000/api/payment-categories/
+# Content-Type: application/json
+
+# {
+#   "name": "Gym Membership",
+#   "description": "Monthly gym and fitness center charges",
+#   "isRecurring": true
+# }
+
+# PATCH http://localhost:5000/api/payment-categories/4
+# Content-Type: application/json
+
+# {
+#   "name": "Updated Maintenance Fee",
+#   "description": "Updated monthly maintenance charges for common areas",
+#   "isRecurring": true
+# }
+
+# DELETE http://localhost:5000/api/payment-categories/4

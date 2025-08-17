@@ -1,0 +1,29 @@
+# GET http://localhost:5000/api/expenses/
+
+
+# GET http://localhost:5000/api/expenses/?startDate=2025-01-01&endDate=2025-01-31
+
+# GET http://localhost:5000/api/expenses/?category=maintenance&year=2025
+
+POST http://localhost:5000/api/expenses/
+Content-Type: application/json
+
+{
+  "category": "Maintenance",
+  "description": "Garden maintenance and landscaping",
+  "amount": 5000,
+  "expenseDate": "2024-03-07",
+  "expenseMonth": 3,
+  "expenseYear": 2024,
+  "paymentMethod": "BANK_TRANSFER"
+}
+
+# GET http://localhost:5000/api/expenses/analytics?year=2025
+
+# GET http://localhost:5000/api/expenses/monthly/2025
+
+# GET http://localhost:5000/api/expenses/categories
+
+# GET http://localhost:5000/api/expenses/category/maintenance?year=2025
+
+# GET http://localhost:5000/api/expenses/summary?startDate=2025-01-01&endDate=2025-01-31

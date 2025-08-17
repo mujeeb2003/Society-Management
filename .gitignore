@@ -27,3 +27,8 @@ maintenance.xlsx
 Data FGP.xlsx
 Data FGP.pdf
 backend\db\society_payments.db
+node_modules
+# Keep environment variables out of version control
+.env
+
+/generated/prisma

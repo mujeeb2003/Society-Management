@@ -1,0 +1,74 @@
+
+# GET http://localhost:5000/api/payments
+
+# GET http://localhost:5000/api/payments/filtered
+# Content-Type: application/json
+
+# {
+#   "startDate": "01/05/2024"
+# }
+
+# GET http://localhost:5000/api/payments/summary?startDate=01/05/2024&endDate=01/05/2025
+
+# GET http://localhost:5000/api/payments/statistics?startDate=01/05/2024&endDate=01/05/2025
+
+# GET http://localhost:5000/api/payments/villa/62
+
+# POST http://localhost:5000/api/payments
+# Content-Type: application/json
+
+# {
+#     "villaId": 48,
+#     "categoryId": 1,
+#     "receivableAmount": 0.00,
+#     "receivedAmount": 0.00,
+#     "paymentDate": "2025-01-01",
+#     "paymentMonth": 1,
+#     "paymentYear": 2025,
+#     "paymentMethod": "CASH",
+#     "notes": "Monthly rent payment"
+# }
+# POST http://localhost:5000/api/payments
+# Content-Type: application/json
+
+# {
+#     "villaId": 62,
+#     "categoryId": 1,
+#     "receivableAmount": 0.00,
+#     "receivedAmount": 0.00,
+#     "paymentDate": "2025-02-01",
+#     "paymentMonth": 2,
+#     "paymentYear": 2025,
+#     "paymentMethod": "CASH",
+#     "notes": "Monthly rent payment"
+# }
+
+# POST http://localhost:5000/api/payments
+# Content-Type: application/json
+
+# {
+#     "villaId": 62,
+#     "categoryId": 1,
+#     "receivableAmount": 0.00,
+#     "receivedAmount": 0.00,
+#     "paymentDate": "2025-01-01",
+#     "paymentMonth": 1,
+#     "paymentYear": 2025,
+#     "paymentMethod": "CASH",
+#     "notes": "Monthly rent payment"
+# }
+
+POST http://localhost:5000/api/payments
+Content-Type: application/json
+
+{
+    "villaId": 2,
+    "categoryId": 1,
+    "receivableAmount": 5000.00,
+    "receivedAmount": 5000.00,
+    "paymentDate": "2025-08-01",
+    "paymentMonth": 8,
+    "paymentYear": 2025,
+    "paymentMethod": "CASH",
+    "notes": "Monthly rent payment"
+}

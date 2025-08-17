@@ -14,13 +14,33 @@ import {
     CardTitle,
 } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User, Lock, Database } from "lucide-react";
-import { backupDatabase, updateUserInfo, changePassword } from "@/redux/user/userSlice";
+import {
+    User,
+    Lock,
+    Database,
+    Download,
+    FileSpreadsheet,
+    FileText,
+    Loader2,
+} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import {
+    backupDatabase,
+    updateUserInfo,
+    changePassword,
+} from "@/redux/user/userSlice";
 import { AppDispatch, type RootState } from "@/types";
 
-export default function SettingsPage() {
+export default function Settings() {
     const dispatch = useDispatch<AppDispatch>();
-    const { user } = useSelector((state: RootState) => state.user);
+    const { user, loading } = useSelector((state: RootState) => state.user);
     const { toast } = useToast();
 
     const [userInfo, setUserInfo] = useState({
@@ -35,9 +55,10 @@ export default function SettingsPage() {
         confirmPassword: "",
     });
 
-    const handleInputChange = (
-        e: React.ChangeEvent<HTMLInputElement>
-    ) => {
+    const [backupFormat, setBackupFormat] = useState<"excel" | "pdf">("excel");
+    const [backupLoading, setBackupLoading] = useState(false);
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setUserInfo((prev) => ({
             ...prev,
@@ -45,9 +66,7 @@ export default function SettingsPage() {
         }));
     };
 
-    const handlePasswordChange = (
-        e: React.ChangeEvent<HTMLInputElement>
-    ) => {
+    const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setPasswords((prev) => ({
             ...prev,
@@ -56,76 +75,169 @@ export default function SettingsPage() {
     };
 
     const handleSave = async () => {
-        try {
-            await dispatch(updateUserInfo({...userInfo,id:user.id})).unwrap();
+        // Validation
+        if (
+            !userInfo.firstName.trim() ||
+            !userInfo.lastName.trim() ||
+            !userInfo.email.trim()
+        ) {
             toast({
-                title: "Profile updated",
-                description: "Your profile has been updated successfully.",
-            });
-        } catch (error) {
-            toast({
-                title: "Error",
-                description: "An error occurred while updating your profile.",
+                title: "Validation Error",
+                description: "All fields are required.",
                 variant: "destructive",
             });
+            return;
         }
-    };
 
-    const handlePasswordUpdate = async () => {
-        if (passwords.newPassword !== passwords.confirmPassword) {
+        // Email validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(userInfo.email)) {
             toast({
-                title: "Error",
-                description: "New passwords do not match.",
+                title: "Validation Error",
+                description: "Please enter a valid email address.",
                 variant: "destructive",
             });
             return;
         }
 
         try {
-            await dispatch(changePassword({
-                id: user.id,
-                currentPassword: passwords.currentPassword,
-                newPassword: passwords.newPassword,
-            })).unwrap();
+            const response = await dispatch(
+                updateUserInfo({ ...userInfo, id: user.id })
+            ).unwrap();
+
+            if (response.error) {
+                toast({
+                    title: "Update Failed",
+                    description: response.error,
+                    variant: "destructive",
+                });
+                return;
+            }
+
             toast({
-                title: "Password updated",
+                title: "Profile Updated",
+                description: "Your profile has been updated successfully.",
+            });
+        } catch (error: any) {
+            toast({
+                title: "Update Failed",
+                description:
+                    error.error ||
+                    "An error occurred while updating your profile.",
+                variant: "destructive",
+            });
+        }
+    };
+
+    const handlePasswordUpdate = async () => {
+        // Validation
+        if (
+            !passwords.currentPassword ||
+            !passwords.newPassword ||
+            !passwords.confirmPassword
+        ) {
+            toast({
+                title: "Validation Error",
+                description: "All password fields are required.",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        if (passwords.newPassword !== passwords.confirmPassword) {
+            toast({
+                title: "Password Mismatch",
+                description: "New passwords do not match.",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        if (passwords.newPassword.length < 6) {
+            toast({
+                title: "Weak Password",
+                description: "Password must be at least 6 characters long.",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        try {
+            const response = await dispatch(
+                changePassword({
+                    id: user.id,
+                    currentPassword: passwords.currentPassword,
+                    newPassword: passwords.newPassword,
+                })
+            ).unwrap();
+
+            if (response.error) {
+                toast({
+                    title: "Password Update Failed",
+                    description: response.error,
+                    variant: "destructive",
+                });
+                return;
+            }
+
+            toast({
+                title: "Password Updated",
                 description: "Your password has been updated successfully.",
             });
+
             setPasswords({
                 currentPassword: "",
                 newPassword: "",
                 confirmPassword: "",
             });
-        } catch (error) {
+        } catch (error: any) {
             toast({
-                title: "Error",
-                description: "An error occurred while updating your password.",
+                title: "Password Update Failed",
+                description:
+                    error.error ||
+                    "An error occurred while updating your password.",
                 variant: "destructive",
             });
         }
     };
 
     const handleBackupDatabase = async () => {
+        setBackupLoading(true);
         try {
-            await dispatch(backupDatabase());
+            const response = await dispatch(
+                backupDatabase(backupFormat)
+            ).unwrap();
+
             toast({
-                title: "Database backup initiated",
-                description: "Your database backup has been initiated successfully.",
+                title: "Backup Completed",
+                description:
+                    response ||
+                    `${backupFormat.toUpperCase()} backup downloaded successfully.`,
             });
-        } catch (err) {
+        } catch (error: any) {
             toast({
-                title: "Error",
-                description: "An error occurred while initiating the database backup.",
+                title: "Backup Failed",
+                description:
+                    error.error ||
+                    "An error occurred while generating the backup.",
                 variant: "destructive",
             });
+        } finally {
+            setBackupLoading(false);
         }
     };
 
     return (
         <div className="container px-4 min-h-screen">
-            <h1 className="text-3xl font-bold mb-6">Settings</h1>
+            <div className="flex items-center justify-between mb-6">
+                <h1 className="text-3xl font-bold">Settings</h1>
+                <Badge variant="outline" className="text-sm">
+                    Logged in as {user.firstName} {user.lastName}
+                </Badge>
+            </div>
+
             <Tabs defaultValue="profile" className="space-y-4">
-                <TabsList>
+                <TabsList className="grid w-full grid-cols-3">
                     <TabsTrigger value="profile">
                         <User className="w-4 h-4 mr-2" />
                         Profile
@@ -136,70 +248,107 @@ export default function SettingsPage() {
                     </TabsTrigger>
                     <TabsTrigger value="backup">
                         <Database className="w-4 h-4 mr-2" />
-                        Backup
+                        Data Management
                     </TabsTrigger>
                 </TabsList>
+
                 <TabsContent value="profile">
                     <Card>
                         <CardHeader>
-                            <CardTitle>Profile</CardTitle>
+                            <CardTitle>Profile Information</CardTitle>
                             <CardDescription>
-                                Manage your public profile information.
+                                Update your personal information and contact
+                                details.
                             </CardDescription>
                         </CardHeader>
-                        <CardContent className="space-y-4">
+                        <CardContent className="space-y-6">
                             <div className="flex items-center space-x-4">
                                 <Avatar className="w-20 h-20">
                                     <AvatarImage
-                                        // src={user.avatar}
-                                        alt={user.firstName}
+                                        src="" // Add avatar URL when available
+                                        alt={`${user.firstName} ${user.lastName}`}
                                     />
-                                    <AvatarFallback>
+                                    <AvatarFallback className="text-lg">
                                         {user.firstName.charAt(0)}
+                                        {user.lastName.charAt(0)}
                                     </AvatarFallback>
                                 </Avatar>
-                                <Button variant="outline">Change Avatar</Button>
+                                <div>
+                                    <Button variant="outline" size="sm">
+                                        Change Avatar
+                                    </Button>
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                        JPG, GIF or PNG. Max size 2MB.
+                                    </p>
+                                </div>
                             </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="firstName">First Name</Label>
-                                <Input
-                                    id="firstName"
-                                    name="firstName"
-                                    value={userInfo.firstName}
-                                    onChange={handleInputChange}
-                                />
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="firstName">
+                                        First Name
+                                    </Label>
+                                    <Input
+                                        id="firstName"
+                                        name="firstName"
+                                        value={userInfo.firstName}
+                                        onChange={handleInputChange}
+                                        disabled={loading}
+                                        placeholder="Enter first name"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="lastName">Last Name</Label>
+                                    <Input
+                                        id="lastName"
+                                        name="lastName"
+                                        value={userInfo.lastName}
+                                        onChange={handleInputChange}
+                                        disabled={loading}
+                                        placeholder="Enter last name"
+                                    />
+                                </div>
                             </div>
+
                             <div className="space-y-2">
-                                <Label htmlFor="lastName">Last Name</Label>
-                                <Input
-                                    id="lastName"
-                                    name="lastName"
-                                    value={userInfo.lastName}
-                                    onChange={handleInputChange}
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="email">Email</Label>
+                                <Label htmlFor="email">Email Address</Label>
                                 <Input
                                     id="email"
                                     name="email"
                                     type="email"
                                     value={userInfo.email}
                                     onChange={handleInputChange}
+                                    disabled={loading}
+                                    placeholder="Enter email address"
                                 />
                             </div>
                         </CardContent>
                         <CardFooter>
-                            <Button onClick={handleSave}>Save Changes</Button>
+                            <Button
+                                onClick={handleSave}
+                                disabled={loading}
+                                className="w-full md:w-auto"
+                            >
+                                {loading ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Updating...
+                                    </>
+                                ) : (
+                                    "Save Changes"
+                                )}
+                            </Button>
                         </CardFooter>
                     </Card>
                 </TabsContent>
+
                 <TabsContent value="security">
                     <Card>
                         <CardHeader>
-                            <CardTitle>Security</CardTitle>
+                            <CardTitle>Password & Security</CardTitle>
                             <CardDescription>
-                                Manage your account's security settings.
+                                Update your password to keep your account
+                                secure.
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
@@ -213,6 +362,8 @@ export default function SettingsPage() {
                                     type="password"
                                     value={passwords.currentPassword}
                                     onChange={handlePasswordChange}
+                                    disabled={loading}
+                                    placeholder="Enter current password"
                                 />
                             </div>
                             <div className="space-y-2">
@@ -225,6 +376,8 @@ export default function SettingsPage() {
                                     type="password"
                                     value={passwords.newPassword}
                                     onChange={handlePasswordChange}
+                                    disabled={loading}
+                                    placeholder="Enter new password (min. 6 characters)"
                                 />
                             </div>
                             <div className="space-y-2">
@@ -237,34 +390,172 @@ export default function SettingsPage() {
                                     type="password"
                                     value={passwords.confirmPassword}
                                     onChange={handlePasswordChange}
+                                    disabled={loading}
+                                    placeholder="Confirm new password"
                                 />
+                            </div>
+
+                            <div className="bg-muted p-4 rounded-lg">
+                                <h4 className="font-medium mb-2">
+                                    Password Requirements:
+                                </h4>
+                                <ul className="text-sm text-muted-foreground space-y-1">
+                                    <li>• At least 6 characters long</li>
+                                    <li>
+                                        • Use a combination of letters, numbers,
+                                        and symbols
+                                    </li>
+                                    <li>• Don't reuse your current password</li>
+                                </ul>
                             </div>
                         </CardContent>
                         <CardFooter>
-                            <Button onClick={handlePasswordUpdate}>Update Password</Button>
+                            <Button
+                                onClick={handlePasswordUpdate}
+                                disabled={loading}
+                                className="w-full md:w-auto"
+                            >
+                                {loading ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Updating...
+                                    </>
+                                ) : (
+                                    "Update Password"
+                                )}
+                            </Button>
                         </CardFooter>
                     </Card>
                 </TabsContent>
+
                 <TabsContent value="backup">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Database Backup</CardTitle>
-                            <CardDescription>
-                                Initiate a backup of your database.
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <p className="text-sm text-muted-foreground mb-4">
-                                Click the button below to start a backup of your
-                                database. This process may take several minutes
-                                depending on the size of your data.
-                            </p>
-                            <Button onClick={handleBackupDatabase}>
-                                <Database className="w-4 h-4 mr-2" />
-                                Start Database Backup
-                            </Button>
-                        </CardContent>
-                    </Card>
+                    <div className="space-y-6">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Database Backup</CardTitle>
+                                <CardDescription>
+                                    Export your complete database including all
+                                    villas, payments, and expenses.
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="space-y-3">
+                                    <Label htmlFor="backup-format">
+                                        Export Format
+                                    </Label>
+                                    <Select
+                                        value={backupFormat}
+                                        onValueChange={(
+                                            value: "excel" | "pdf"
+                                        ) => setBackupFormat(value)}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select format" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="excel">
+                                                <div className="flex items-center">
+                                                    <FileSpreadsheet className="w-4 h-4 mr-2 text-green-600" />
+                                                    Excel (.xlsx) - Complete
+                                                    Data
+                                                </div>
+                                            </SelectItem>
+                                            <SelectItem value="pdf">
+                                                <div className="flex items-center">
+                                                    <FileText className="w-4 h-4 mr-2 text-red-600" />
+                                                    PDF (.pdf) - Summary Report
+                                                </div>
+                                            </SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg">
+                                    <div className="flex items-start space-x-3">
+                                        <Database className="w-5 h-5 text-blue-600 mt-0.5" />
+                                        <div>
+                                            <h4 className="font-medium text-blue-900 dark:text-blue-100">
+                                                What's included in the backup:
+                                            </h4>
+                                            <ul className="text-sm text-blue-800 dark:text-blue-200 mt-2 space-y-1">
+                                                <li>
+                                                    • All villa information and
+                                                    residents
+                                                </li>
+                                                <li>
+                                                    • Complete payment history
+                                                    and records
+                                                </li>
+                                                <li>
+                                                    • All expense categories and
+                                                    transactions
+                                                </li>
+                                                <li>
+                                                    • Payment categories and
+                                                    configurations
+                                                </li>
+                                                <li>
+                                                    • Financial summary and
+                                                    statistics
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <Button
+                                    onClick={handleBackupDatabase}
+                                    disabled={backupLoading}
+                                    className="w-full"
+                                    size="lg"
+                                >
+                                    {backupLoading ? (
+                                        <>
+                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                            Generating{" "}
+                                            {backupFormat.toUpperCase()}{" "}
+                                            Backup...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Download className="w-4 h-4 mr-2" />
+                                            Download{" "}
+                                            {backupFormat.toUpperCase()} Backup
+                                        </>
+                                    )}
+                                </Button>
+                            </CardContent>
+                        </Card>
+
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Data Management Tips</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                    <div className="space-y-2">
+                                        <h4 className="font-medium">
+                                            Regular Backups
+                                        </h4>
+                                        <p className="text-muted-foreground">
+                                            We recommend taking weekly backups
+                                            to ensure your data is always safe.
+                                        </p>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <h4 className="font-medium">
+                                            Excel vs PDF
+                                        </h4>
+                                        <p className="text-muted-foreground">
+                                            Excel format includes all raw data,
+                                            while PDF provides a formatted
+                                            summary report.
+                                        </p>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
                 </TabsContent>
             </Tabs>
         </div>

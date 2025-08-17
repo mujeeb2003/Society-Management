@@ -7,21 +7,31 @@ import Navbar from "./pages/Navbar";
 import Payments from "./pages/Payments";
 import Villas from "./pages/Villas";
 import Settings from "./pages/Settings";
-import PaymentHeadsManagement from "./pages/PaymentHeads";
+import PaymentCategoriesManagement from "./pages/PaymentCategoriesManagement";
 import Reports from "./pages/Reports";
+import ProtectedRoute from "./utils/ProtectedRoute";
 import type { AppDispatch } from "./types";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useEffect } from "react";
 import { getPayments, getVillas, updateUser } from "./redux/user/userSlice";
+import { RootState } from "./types";
+import ExpensesManagement from "./pages/Expenses";
 
 function App() {
     const dispatch = useDispatch<AppDispatch>();
+    const { isLoggedIn } = useSelector((state: RootState) => state.user);
 
     useEffect(() => {
-        dispatch(getPayments());
-        dispatch(getVillas());
         dispatch(updateUser());
     }, [dispatch]);
+
+    // Only fetch data if user is logged in
+    useEffect(() => {
+        if (isLoggedIn) {
+            dispatch(getPayments());
+            dispatch(getVillas());
+        }
+    }, [dispatch, isLoggedIn]);
 
     return (
         <>
@@ -30,7 +40,9 @@ function App() {
                 <Routes>
                     <Route path="/" element={<LoginForm />} />
                     <Route path="/signup" element={<SignupForm />} />
-                    <Route >
+
+                    {/* Protected Routes */}
+                    <Route element={<ProtectedRoute />}>
                         <Route
                             path="/home/*"
                             element={
@@ -49,11 +61,15 @@ function App() {
                                             path="/villas"
                                             element={<Villas />}
                                         />
-                                        <Route 
-                                            path="/paymentHeads"
-                                            element={<PaymentHeadsManagement />}
+                                        <Route
+                                            path="/paymentCategories"
+                                            element={<PaymentCategoriesManagement />}
                                         />
-                                        <Route 
+                                        <Route
+                                            path="/expenses"
+                                            element={<ExpensesManagement />}
+                                        />
+                                        <Route
                                             path="/reports"
                                             element={<Reports />}
                                         />
@@ -61,7 +77,6 @@ function App() {
                                             path="/settings"
                                             element={<Settings />}
                                         />
-                                        
                                     </Routes>
                                 </>
                             }

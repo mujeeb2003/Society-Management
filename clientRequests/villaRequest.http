@@ -1,0 +1,27 @@
+GET http://localhost:5000/api/villas/
+
+# GET http://localhost:5000/api/villas/occupied
+
+# GET http://localhost:5000/api/villas/1
+
+# GET http://localhost:5000/api/villas/summaries
+
+# POST http://localhost:5000/api/villas/
+# Content-Type: application/json
+
+# {
+#   "villaNumber": "A-104",
+#   "residentName": "Test Resident",
+#   "occupancyType": "OWNER"
+# }
+
+# PATCH http://localhost:5000/api/villas/101
+# Content-Type: application/json
+
+# {
+#   "villaNumber": "A-102",
+#   "residentName": "Updated Resident Name",
+#   "occupancyType": "TENANT"
+# }
+
+# DELETE http://localhost:5000/api/villas/101

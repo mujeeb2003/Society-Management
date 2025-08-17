@@ -1,0 +1,7 @@
+# GET http://localhost:5000/api/dashboards/stats          
+
+# GET http://localhost:5000/api/dashboards/summary        
+
+# GET http://localhost:5000/api/backups/generate?format=excel
+# GET http://localhost:5000/api/backups/generate?format=pdf          # Generate data backup
+GET http://localhost:5000/api/backups/info   

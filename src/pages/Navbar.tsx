@@ -19,13 +19,13 @@ function Navbar() {
     const location = useLocation();
     const isActive = (path: string) => location.pathname === path;
     return (
-        <header className="sticky top-0 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
+        <header className="sticky top-0 flex h-16 items-center gap-4 mb-4 border-b bg-background px-4 md:px-2">
             <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
                 <Link
                     to="/home"
                     className={`flex items-center gap-2 text-lg font-semibold md:text-base text-white`}
                 >
-                    <Activity className="h-6 w-6" />
+                    <Activity className="h-6 w-6" color="black" />
                     {/* <span className="sr-only"></span> */}
                 </Link>
                 <Link
@@ -59,14 +59,24 @@ function Navbar() {
                     Villas
                 </Link>
                 <Link
-                    to="/home/paymentHeads"
+                    to="/home/paymentCategories"
                     className={`${
-                        isActive("/home/paymentHeads")
+                        isActive("/home/paymentCategories")
                             ? "text-foreground"
                             : "text-muted-foreground"
                     } transition-colors hover:text-foreground`}
                 >
-                    Payment Head
+                    Payment Categories
+                </Link>
+                <Link
+                    to="/home/expenses"
+                    className={`${
+                        isActive("/home/expenses")
+                            ? "text-foreground"
+                            : "text-muted-foreground"
+                    } transition-colors hover:text-foreground`}
+                >
+                    Expenses
                 </Link>
                 <Link
                     to="/home/reports"
@@ -106,7 +116,7 @@ function Navbar() {
                             to="/home"
                             className="flex items-center gap-2 text-lg font-semibold text-foreground"
                         >
-                            <Activity className="h-6 w-6" />
+                            <Activity className="h-6 w-6" color="black" />
                         </Link>
                         <Link to="/home" className="hover:text-foreground">
                             Dashboard
