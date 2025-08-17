@@ -115,12 +115,21 @@ export default function ExpensesManagement() {
 
     const loadAnalytics = async (year: number) => {
         try {
+            console.log('Loading analytics for year:', year);
             const result = await dispatch(getExpenseAnalytics(year)).unwrap();
+            console.log('Analytics result:', result);
             if (result.data) {
+                console.log('Analytics summary totalCount:', result.data.summary?.totalCount, typeof result.data.summary?.totalCount);
                 setAnalytics(result.data);
+                console.log('Analytics data set:', result.data);
             }
         } catch (error) {
             console.error("Failed to load analytics:", error);
+            toast({
+                title: "Failed to load analytics",
+                description: "Unable to load expense analytics. Please try again.",
+                variant: "destructive",
+            });
         }
     };
 
@@ -684,7 +693,7 @@ export default function ExpensesManagement() {
                 </TabsContent>
 
                 <TabsContent value="analytics" className="space-y-6">
-                    {analytics && (
+                    {analytics ? (
                         <>
                             {/* Analytics Summary */}
                             <div className="grid gap-4 md:grid-cols-4">
@@ -692,17 +701,19 @@ export default function ExpensesManagement() {
                                     <CardContent className="pt-6">
                                         <div className="text-2xl font-bold">
                                             PKR{" "}
-                                            {analytics.summary.totalAmount.toLocaleString()}
+                                            {analytics.summary?.totalAmount?.toLocaleString() || 0}
                                         </div>
                                         <p className="text-xs text-muted-foreground">
-                                            Total Amount ({analytics.year})
+                                            Total Amount ({analytics.year || currentYear})
                                         </p>
                                     </CardContent>
                                 </Card>
                                 <Card>
                                     <CardContent className="pt-6">
                                         <div className="text-2xl font-bold">
-                                            {analytics.summary.totalCount}
+                                            {typeof analytics.summary?.totalCount === 'object' 
+                                                ? analytics.summary?.totalCount || 0 
+                                                : analytics.summary?.totalCount || 0}
                                         </div>
                                         <p className="text-xs text-muted-foreground">
                                             Total Transactions
@@ -713,7 +724,7 @@ export default function ExpensesManagement() {
                                     <CardContent className="pt-6">
                                         <div className="text-2xl font-bold">
                                             PKR{" "}
-                                            {analytics.summary.averagePerExpense.toLocaleString()}
+                                            {analytics.summary?.averagePerExpense?.toLocaleString() || 0}
                                         </div>
                                         <p className="text-xs text-muted-foreground">
                                             Average per Expense
@@ -724,7 +735,7 @@ export default function ExpensesManagement() {
                                     <CardContent className="pt-6">
                                         <div className="text-2xl font-bold">
                                             PKR{" "}
-                                            {analytics.summary.averagePerMonth.toLocaleString()}
+                                            {analytics.summary?.averagePerMonth?.toLocaleString() || 0}
                                         </div>
                                         <p className="text-xs text-muted-foreground">
                                             Average per Month
@@ -734,59 +745,113 @@ export default function ExpensesManagement() {
                             </div>
 
                             {/* Top Categories */}
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>
-                                        Top Expense Categories
-                                    </CardTitle>
-                                    <CardDescription>
-                                        Highest spending categories for{" "}
-                                        {analytics.year}
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="space-y-4">
-                                        {analytics.topCategories.map(
-                                            (category, index) => (
-                                                <div
-                                                    key={category.category}
-                                                    className="flex items-center justify-between"
-                                                >
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-medium">
-                                                            {index + 1}
+                            {analytics.topCategories && analytics.topCategories.length > 0 ? (
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle>
+                                            Top Expense Categories
+                                        </CardTitle>
+                                        <CardDescription>
+                                            Highest spending categories for{" "}
+                                            {analytics.year || currentYear}
+                                        </CardDescription>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="space-y-4">
+                                            {analytics.topCategories.map(
+                                                (category, index) => (
+                                                    <div
+                                                        key={`category-${index}-${category.category || index}`}
+                                                        className="flex items-center justify-between"
+                                                    >
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-medium">
+                                                                {index + 1}
+                                                            </div>
+                                                            <div>
+                                                                <div className="font-medium">
+                                                                    {category.category || 'Unknown Category'}
+                                                                </div>
+                                                                <div className="text-sm text-muted-foreground">
+                                                                    {category.count || 0}{" "}
+                                                                    transactions
+                                                                </div>
+                                                            </div>
                                                         </div>
-                                                        <div>
+                                                        <div className="text-right">
                                                             <div className="font-medium">
-                                                                {
-                                                                    category.category
-                                                                }
+                                                                PKR{" "}
+                                                                {(category.amount || 0).toLocaleString()}
                                                             </div>
                                                             <div className="text-sm text-muted-foreground">
-                                                                {category.count}{" "}
-                                                                transactions
+                                                                {category.percentage || '0'}%
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <div className="text-right">
-                                                        <div className="font-medium">
-                                                            PKR{" "}
-                                                            {category.amount.toLocaleString()}
-                                                        </div>
-                                                        <div className="text-sm text-muted-foreground">
-                                                            {
-                                                                category.percentage
-                                                            }
-                                                            %
-                                                        </div>
+                                                )
+                                            )}
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            ) : (
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle>
+                                            Top Expense Categories
+                                        </CardTitle>
+                                        <CardDescription>
+                                            No expense data available for{" "}
+                                            {analytics.year || currentYear}
+                                        </CardDescription>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="text-center py-8">
+                                            <BarChart3 className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+                                            <p className="text-muted-foreground">
+                                                No expense data to show
+                                            </p>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            )}
+
+                            {/* Monthly Breakdown */}
+                            {analytics.monthlyBreakdown && analytics.monthlyBreakdown.length > 0 && (
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle>Monthly Breakdown</CardTitle>
+                                        <CardDescription>
+                                            Monthly expense totals for {analytics.year || currentYear}
+                                        </CardDescription>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="space-y-4">
+                                            {analytics.monthlyBreakdown.map((monthData, index) => (
+                                                <div
+                                                    key={`month-${monthData.month || index}`}
+                                                    className="flex items-center justify-between p-3 border rounded-lg"
+                                                >
+                                                    <div className="font-medium">
+                                                        {monthData.monthName || `Month ${monthData.month || index + 1}`}
+                                                    </div>
+                                                    <div className="font-medium text-red-600">
+                                                        PKR {(monthData.amount || 0).toLocaleString()}
                                                     </div>
                                                 </div>
-                                            )
-                                        )}
-                                    </div>
-                                </CardContent>
-                            </Card>
+                                            ))}
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            )}
                         </>
+                    ) : (
+                        <div className="text-center py-12">
+                            <BarChart3 className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+                            <h3 className="text-lg font-semibold mb-2">Loading Analytics</h3>
+                            <p className="text-muted-foreground">
+                                Please wait while we load the expense analytics...
+                            </p>
+                        </div>
                     )}
                 </TabsContent>
             </Tabs>

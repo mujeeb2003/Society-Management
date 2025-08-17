@@ -202,7 +202,7 @@ export class ExpenseModel {
 
         // Calculate averages
         const totalAmount = parseFloat(yearTotal._sum.amount || 0);
-        const totalCount = yearTotal._count || 0;
+        const totalCount = yearTotal._count?.id || yearTotal._count || 0;
         const averagePerExpense = totalCount > 0 ? totalAmount / totalCount : 0;
         const averagePerMonth = totalAmount / 12;
 
@@ -210,7 +210,7 @@ export class ExpenseModel {
         const topCategories = categoryBreakdown.slice(0, 5).map((item) => ({
             category: item.category,
             amount: parseFloat(item._sum.amount || 0),
-            count: item._count,
+            count: item._count?.id || item._count || 0,
             percentage:
                 totalAmount > 0
                     ? (
@@ -236,7 +236,7 @@ export class ExpenseModel {
             categoryBreakdown: categoryBreakdown.map((item) => ({
                 category: item.category,
                 amount: parseFloat(item._sum.amount || 0),
-                count: item._count,
+                count: item._count?.id || item._count || 0,
                 percentage:
                     totalAmount > 0
                         ? (
@@ -249,7 +249,7 @@ export class ExpenseModel {
             paymentMethodBreakdown: paymentMethodBreakdown.map((item) => ({
                 method: item.paymentMethod,
                 amount: parseFloat(item._sum.amount || 0),
-                count: item._count,
+                count: item._count?.id || item._count || 0,
                 percentage:
                     totalAmount > 0
                         ? (
@@ -307,7 +307,7 @@ export class ExpenseModel {
                 results.map((result) => ({
                     category: result.category,
                     total: parseFloat(result._sum.amount || 0),
-                    count: result._count,
+                    count: result._count?.id || result._count || 0,
                 }))
             );
     }
