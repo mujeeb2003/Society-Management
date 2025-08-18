@@ -4,7 +4,7 @@
 ## Overview
 Society Management App is a comprehensive platform designed for society heads and management teams to efficiently handle all aspects of residential community administration. It streamlines payment collection, resident management, expense tracking, and reporting, providing a seamless experience for both managers and residents.
 
-![Society Management App](image-1.png)
+![Society Management App](image.png)
 
 ## Business Value
 Society Management App is built for real-world society management, not just as a personal project. It empowers society heads and committees to:
