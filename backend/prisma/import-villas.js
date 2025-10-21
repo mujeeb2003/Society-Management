@@ -9,7 +9,7 @@ async function importVillas() {
     console.log('📊 Reading Excel file...');
     
     // Read the Excel file
-    const workbook = xlsx.readFile("./prisma/2024.xlsx");
+    const workbook = xlsx.readFile("./prisma/Book1.xlsx");
     const worksheet = workbook.Sheets[workbook.SheetNames[0]];
     const data = xlsx.utils.sheet_to_json(worksheet);
 

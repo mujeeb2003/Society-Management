@@ -716,6 +716,119 @@ export const getYearlySummary = createAsyncThunk(
     }
 );
 
+export const generateVillaReport = createAsyncThunk(
+    "user/generateVillaReport",
+    async (
+        { villaId, year }: { villaId: number; year: number },
+        { rejectWithValue }
+    ) => {
+        try {
+            const response = await axios.get(
+                `${API_URL}/reports/villa/${villaId}/${year}`
+            );
+            return response.data;
+        } catch (error: any) {
+            return rejectWithValue(
+                error.response?.data || { error: "Something went wrong" }
+            );
+        }
+    }
+);
+
+export const exportVillaReport = createAsyncThunk(
+    "user/exportVillaReport",
+    async (
+        { villaId, year }: { villaId: number; year: number },
+        { rejectWithValue }
+    ) => {
+        try {
+            const response = await axios.get(
+                `${API_URL}/reports/villa/${villaId}/${year}/export`,
+                {
+                    responseType: "blob",
+                }
+            );
+
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement("a");
+            link.href = url;
+            link.setAttribute("download", `Villa_Report_${villaId}_${year}.xlsx`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+
+            return { success: true };
+        } catch (error: any) {
+            return rejectWithValue(
+                error.response?.data || { error: "Something went wrong" }
+            );
+        }
+    }
+);
+
+export const generatePendingPaymentsReport = createAsyncThunk(
+    "user/generatePendingPaymentsReport",
+    async (
+        { month, year }: { month?: number; year?: number },
+        { rejectWithValue }
+    ) => {
+        try {
+            const params = new URLSearchParams();
+            if (month) params.append("month", month.toString());
+            if (year) params.append("year", year.toString());
+
+            const response = await axios.get(
+                `${API_URL}/reports/pending?${params.toString()}`
+            );
+            return response.data;
+        } catch (error: any) {
+            return rejectWithValue(
+                error.response?.data || { error: "Something went wrong" }
+            );
+        }
+    }
+);
+
+export const exportPendingPaymentsReport = createAsyncThunk(
+    "user/exportPendingPaymentsReport",
+    async (
+        { month, year }: { month?: number; year?: number },
+        { rejectWithValue }
+    ) => {
+        try {
+            const params = new URLSearchParams();
+            if (month) params.append("month", month.toString());
+            if (year) params.append("year", year.toString());
+
+            const response = await axios.get(
+                `${API_URL}/reports/pending/export?${params.toString()}`,
+                {
+                    responseType: "blob",
+                }
+            );
+
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement("a");
+            link.href = url;
+            link.setAttribute(
+                "download",
+                `Pending_Payments_${month || new Date().getMonth() + 1}_${year || new Date().getFullYear()}.xlsx`
+            );
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+
+            return { success: true };
+        } catch (error: any) {
+            return rejectWithValue(
+                error.response?.data || { error: "Something went wrong" }
+            );
+        }
+    }
+);
+
 const userSlice = createSlice({
     initialState,
     name: `user`,

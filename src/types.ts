@@ -276,6 +276,78 @@ export interface YearlySummary {
     }>;
 }
 
+export interface VillaReport {
+    villa: {
+        id: number;
+        villaNumber: string;
+        residentName: string | null;
+        occupancyType: string;
+    };
+    year: number;
+    monthlyPayments: Array<{
+        month: number;
+        monthName: string;
+        payments: Array<{
+            id: number;
+            categoryName: string;
+            receivableAmount: number;
+            receivedAmount: number;
+            pendingAmount: number;
+            paymentDate: string;
+            paymentMethod: string;
+            paymentStatus: string;
+            notes?: string;
+        }>;
+        totalReceivable: number;
+        totalReceived: number;
+        totalPending: number;
+    }>;
+    yearlyTotals: {
+        totalReceivable: number;
+        totalReceived: number;
+        totalPending: number;
+        totalPayments: number;
+    };
+    paymentStats: {
+        paidMonths: number;
+        partialMonths: number;
+        unpaidMonths: number;
+    };
+    generatedAt: string;
+}
+
+export interface PendingPaymentsReport {
+    month: number;
+    year: number;
+    monthName: string;
+    summary: {
+        totalVillasWithPending: number;
+        totalPendingAmount: number;
+        totalReceivableAmount: number;
+        totalReceivedAmount: number;
+        unpaidVillas: number;
+        partialPaidVillas: number;
+    };
+    pendingVillas: Array<{
+        villaId: number;
+        villaNumber: string;
+        residentName: string;
+        occupancyType: string;
+        totalReceivable: number;
+        totalReceived: number;
+        totalPending: number;
+        paymentStatus: 'unpaid' | 'partial';
+        paymentDetails: Array<{
+            categoryId: number | null;
+            categoryName: string;
+            receivableAmount: number;
+            receivedAmount: number;
+            pendingAmount: number;
+        }>;
+    }>;
+    generatedAt: string;
+}
+
 
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;

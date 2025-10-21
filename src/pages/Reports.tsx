@@ -14,16 +14,18 @@ import {
     ArrowRight,
     BarChart3,
     TrendingUp,
+    Home,
+    AlertTriangle,
 } from "lucide-react";
 import MonthlyReport from "./reports/MonthlyReport";
+import VillaWiseReport from "./reports/VillaWiseReport";
+import PendingPaymentsReport from "./reports/PendingPaymentsReport";
 
 export default function Reports() {
     const [currentView, setCurrentView] = useState<string>("main");
 
     const handleReportSelect = (reportId: string) => {
-        if (reportId === "monthly-report") {
-            setCurrentView(reportId);
-        }
+        setCurrentView(reportId);
     };
 
     const handleBackToMain = () => {
@@ -33,6 +35,16 @@ export default function Reports() {
     // Render Monthly Report component
     if (currentView === "monthly-report") {
         return <MonthlyReport onBack={handleBackToMain} />;
+    }
+
+    // Render Villa-wise Report component
+    if (currentView === "villa-report") {
+        return <VillaWiseReport onBack={handleBackToMain} />;
+    }
+
+    // Render Pending Payments Report component
+    if (currentView === "pending-payments") {
+        return <PendingPaymentsReport onBack={handleBackToMain} />;
     }
 
     // Main reports dashboard
@@ -139,6 +151,174 @@ export default function Reports() {
                         <Badge variant="outline" className="bg-white">
                             <TrendingUp className="h-3 w-3 mr-1" />
                             Financial Analysis
+                        </Badge>
+                    </div>
+                </CardContent>
+            </Card>
+
+            {/* Villa-wise Report Card */}
+            <Card className="border-2 border-purple-200 bg-gradient-to-r from-purple-50 to-pink-50">
+                <CardHeader>
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                            <div className="p-3 rounded-xl bg-purple-100">
+                                <Home className="h-8 w-8 text-purple-600" />
+                            </div>
+                            <div>
+                                <CardTitle className="text-2xl font-bold text-foreground">
+                                    Villa-wise Annual Report
+                                </CardTitle>
+                                <CardDescription className="text-purple-600 text-lg">
+                                    Complete payment history for a specific villa throughout the year
+                                </CardDescription>
+                                <Badge className="mt-2 bg-purple-100 text-purple-700 border-purple-200">
+                                    Available Now
+                                </Badge>
+                            </div>
+                        </div>
+                        <Button
+                            onClick={() => handleReportSelect("villa-report")}
+                            className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 text-lg"
+                        >
+                            Generate Report
+                            <ArrowRight className="h-5 w-5 ml-2" />
+                        </Button>
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    <p className="text-foreground mb-4">
+                        Get a comprehensive payment report for any villa including:
+                    </p>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                        <div className="bg-white/60 p-3 rounded-lg">
+                            <div className="font-semibold text-purple-700">
+                                Villa Information
+                            </div>
+                            <div className="text-sm text-purple-600">
+                                Villa details and resident info
+                            </div>
+                        </div>
+                        <div className="bg-white/60 p-3 rounded-lg">
+                            <div className="font-semibold text-purple-700">
+                                Monthly Breakdown
+                            </div>
+                            <div className="text-sm text-purple-600">
+                                Payment details for each month
+                            </div>
+                        </div>
+                        <div className="bg-white/60 p-3 rounded-lg">
+                            <div className="font-semibold text-purple-700">
+                                Yearly Totals
+                            </div>
+                            <div className="text-sm text-purple-600">
+                                Annual receivable, received, pending
+                            </div>
+                        </div>
+                        <div className="bg-white/60 p-3 rounded-lg">
+                            <div className="font-semibold text-purple-700">
+                                Payment Statistics
+                            </div>
+                            <div className="text-sm text-purple-600">
+                                Paid, partial, unpaid months
+                            </div>
+                        </div>
+                    </div>
+                    <div className="flex gap-2">
+                        <Badge variant="outline" className="bg-white">
+                            <Download className="h-3 w-3 mr-1" />
+                            Excel Export
+                        </Badge>
+                        <Badge variant="outline" className="bg-white">
+                            <Home className="h-3 w-3 mr-1" />
+                            Villa Specific
+                        </Badge>
+                        <Badge variant="outline" className="bg-white">
+                            <TrendingUp className="h-3 w-3 mr-1" />
+                            Annual Overview
+                        </Badge>
+                    </div>
+                </CardContent>
+            </Card>
+
+            {/* Pending Payments Report Card */}
+            <Card className="border-2 border-red-200 bg-gradient-to-r from-red-50 to-orange-50">
+                <CardHeader>
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                            <div className="p-3 rounded-xl bg-red-100">
+                                <AlertTriangle className="h-8 w-8 text-red-600" />
+                            </div>
+                            <div>
+                                <CardTitle className="text-2xl font-bold text-foreground">
+                                    Pending Payments Report
+                                </CardTitle>
+                                <CardDescription className="text-base">
+                                    Track all villas with outstanding payments
+                                </CardDescription>
+                                <p className="text-sm text-muted-foreground mt-1">
+                                    Quickly identify and follow up on pending payments
+                                </p>
+                            </div>
+                        </div>
+                        <Button
+                            onClick={() => handleReportSelect("pending-payments")}
+                            className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 text-lg"
+                        >
+                            Generate Report
+                            <ArrowRight className="h-5 w-5 ml-2" />
+                        </Button>
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    <p className="text-foreground mb-4">
+                        Get a comprehensive list of all pending payments including:
+                    </p>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                        <div className="bg-white/60 p-3 rounded-lg">
+                            <div className="font-semibold text-red-700">
+                                Villa Details
+                            </div>
+                            <div className="text-sm text-red-600">
+                                Number, resident name, occupancy
+                            </div>
+                        </div>
+                        <div className="bg-white/60 p-3 rounded-lg">
+                            <div className="font-semibold text-red-700">
+                                Payment Breakdown
+                            </div>
+                            <div className="text-sm text-red-600">
+                                Receivable, received, pending amounts
+                            </div>
+                        </div>
+                        <div className="bg-white/60 p-3 rounded-lg">
+                            <div className="font-semibold text-red-700">
+                                Category Details
+                            </div>
+                            <div className="text-sm text-red-600">
+                                Payment head-wise pending
+                            </div>
+                        </div>
+                        <div className="bg-white/60 p-3 rounded-lg">
+                            <div className="font-semibold text-red-700">
+                                Summary Statistics
+                            </div>
+                            <div className="text-sm text-red-600">
+                                Total pending, unpaid vs partial
+                            </div>
+                        </div>
+                    </div>
+                    <div className="flex gap-2">
+                        <Badge variant="outline" className="bg-white">
+                            <Download className="h-3 w-3 mr-1" />
+                            Excel Export
+                        </Badge>
+                        <Badge variant="outline" className="bg-white">
+                            <AlertTriangle className="h-3 w-3 mr-1" />
+                            Payment Tracking
+                        </Badge>
+                        <Badge variant="outline" className="bg-white">
+                            <TrendingUp className="h-3 w-3 mr-1" />
+                            Monthly Overview
                         </Badge>
                     </div>
                 </CardContent>

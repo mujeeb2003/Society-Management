@@ -23,6 +23,10 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Label } from "@/components/ui/label";
 import PaymentReceipt from "@/components/PaymentReceipt";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
+import { X } from "lucide-react";
 // import PaymentReceipt from "@/components/PaymentReceipt";
 
 const months = [
@@ -60,7 +64,7 @@ interface FormData {
     categoryId: number;
     receivableAmount: number;
     receivedAmount: number;
-    paymentMonth: string;
+    paymentMonths: string[]; // Changed from string to array
     paymentYear: string;
     paymentMethod: string;
     notes: string;
@@ -75,7 +79,7 @@ export default function AddPaymentDialog() {
         categoryId: 0,
         receivableAmount: 0,
         receivedAmount: 0,
-        paymentMonth: "",
+        paymentMonths: [], // Changed from empty string to empty array
         paymentYear: new Date().getFullYear().toString(),
         paymentMethod: "CASH",
         notes: "",
@@ -122,6 +126,15 @@ export default function AddPaymentDialog() {
             return;
         }
 
+        if (formData.paymentMonths.length === 0) {
+            toast({
+                title: "Validation Error",
+                description: "Please select at least one month",
+                variant: "destructive",
+            });
+            return;
+        }
+
         if (formData.receivedAmount > formData.receivableAmount) {
             toast({
                 title: "Invalid amount",
@@ -132,55 +145,80 @@ export default function AddPaymentDialog() {
         }
 
         try {
-            // ✅ Prepare payment data for new backend structure
-            const paymentData = {
-                villaId: formData.villaId,
-                categoryId: formData.categoryId,
-                receivableAmount: parseFloat(
-                    formData.receivableAmount.toString()
-                ),
-                receivedAmount: parseFloat(formData.receivedAmount.toString()),
-                paymentDate: new Date().toISOString(),
-                paymentMonth: monthNameToNumber[formData.paymentMonth],
-                paymentYear: parseInt(formData.paymentYear),
-                paymentMethod: formData.paymentMethod,
-                notes:
-                    formData.notes ||
-                    `${selectedCategory?.name} payment for ${formData.paymentMonth}-${formData.paymentYear}`,
-            };
+            let successCount = 0;
+            let failedMonths: string[] = [];
 
-            console.log("Sending payment data:", paymentData);
+            // Loop through all selected months and create payment for each
+            for (const month of formData.paymentMonths) {
+                try {
+                    const paymentData = {
+                        villaId: formData.villaId,
+                        categoryId: formData.categoryId,
+                        receivableAmount: parseFloat(
+                            formData.receivableAmount.toString()
+                        ),
+                        receivedAmount: parseFloat(formData.receivedAmount.toString()),
+                        paymentDate: new Date().toISOString(),
+                        paymentMonth: monthNameToNumber[month],
+                        paymentYear: parseInt(formData.paymentYear),
+                        paymentMethod: formData.paymentMethod,
+                        notes:
+                            formData.notes ||
+                            `${selectedCategory?.name} payment for ${month}-${formData.paymentYear}`,
+                    };
 
-            const result = await dispatch(postPayment(paymentData)).unwrap();
+                    await dispatch(postPayment(paymentData)).unwrap();
+                    successCount++;
+                } catch (error: any) {
+                    console.error(`Failed to add payment for ${month}:`, error);
+                    failedMonths.push(month);
+                }
+            }
 
             // ✅ Refresh payments data
             await dispatch(getPayments());
 
-            toast({
-                title: "Success",
-                description: "Payment added successfully",
-                variant: "default",
-            });
+            // Show appropriate toast based on results
+            if (successCount === formData.paymentMonths.length) {
+                toast({
+                    title: "Success",
+                    description: `Payment${formData.paymentMonths.length > 1 ? 's' : ''} added successfully for ${formData.paymentMonths.length} month${formData.paymentMonths.length > 1 ? 's' : ''}`,
+                    variant: "default",
+                });
+            } else if (successCount > 0) {
+                toast({
+                    title: "Partial Success",
+                    description: `${successCount} payment(s) added. Failed for: ${failedMonths.join(", ")}`,
+                    variant: "default",
+                });
+            } else {
+                toast({
+                    title: "Error",
+                    description: "Failed to add payments for all selected months",
+                    variant: "destructive",
+                });
+                return;
+            }
 
-            console.log("Payment added successfully:", result);
-
-            // ✅ Prepare receipt data
-            setReceiptData({
-                payment_id: result.data?.id || Date.now(),
-                villa_number: selectedVilla?.villaNumber,
-                resident_name: selectedVilla?.residentName,
-                receivable_amount: formData.receivableAmount,
-                received_amount: formData.receivedAmount,
-                pending_amount:
-                    formData.receivableAmount - formData.receivedAmount,
-                paymentMonth: formData.paymentMonth,
-                paymentYear: formData.paymentYear,
-                payment_category: selectedCategory?.name,
-                payment_method: formData.paymentMethod,
-                notes: formData.notes,
-                payment_date: new Date().toLocaleDateString(),
-            });
-            setShowReceipt(true);
+            // ✅ Prepare receipt data for the first month (for display)
+            if (successCount > 0) {
+                setReceiptData({
+                    payment_id: Date.now(),
+                    villa_number: selectedVilla?.villaNumber,
+                    resident_name: selectedVilla?.residentName,
+                    receivable_amount: formData.receivableAmount,
+                    received_amount: formData.receivedAmount,
+                    pending_amount:
+                        formData.receivableAmount - formData.receivedAmount,
+                    paymentMonth: formData.paymentMonths.join(", "),
+                    paymentYear: formData.paymentYear,
+                    payment_category: selectedCategory?.name,
+                    payment_method: formData.paymentMethod,
+                    notes: formData.notes,
+                    payment_date: new Date().toLocaleDateString(),
+                });
+                setShowReceipt(true);
+            }
         } catch (error: any) {
             console.error("Payment creation error:", error);
             toast({
@@ -191,13 +229,22 @@ export default function AddPaymentDialog() {
         }
     };
 
+    const toggleMonth = (month: string) => {
+        setFormData((prev) => ({
+            ...prev,
+            paymentMonths: prev.paymentMonths.includes(month)
+                ? prev.paymentMonths.filter((m) => m !== month)
+                : [...prev.paymentMonths, month],
+        }));
+    };
+
     const resetForm = () => {
         setFormData({
             villaId: 0,
             categoryId: 0,
             receivableAmount: 0,
             receivedAmount: 0,
-            paymentMonth: "",
+            paymentMonths: [],
             paymentYear: new Date().getFullYear().toString(),
             paymentMethod: "CASH",
             notes: "",
@@ -381,39 +428,102 @@ export default function AddPaymentDialog() {
                             />
                         </div>
 
-                        {/* ✅ Payment Month */}
+                        {/* ✅ Payment Months (Multi-select) */}
                         <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="month" className="text-right">
-                                Month
+                            <Label htmlFor="months" className="text-right">
+                                Months
                             </Label>
                             <div className="col-span-3">
-                                <Select
-                                    value={formData.paymentMonth}
-                                    onValueChange={(value) =>
-                                        setFormData((prev) => ({
-                                            ...prev,
-                                            paymentMonth: value,
-                                        }))
-                                    }
-                                    required
-                                >
-                                    <SelectTrigger className="w-full">
-                                        <SelectValue placeholder="Select Month" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectGroup>
-                                            <SelectLabel>Month</SelectLabel>
-                                            {months.map((month) => (
-                                                <SelectItem
-                                                    value={month}
-                                                    key={month}
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Button
+                                            variant="outline"
+                                            className="w-full justify-start text-left font-normal"
+                                        >
+                                            {formData.paymentMonths.length === 0 ? (
+                                                <span className="text-muted-foreground">
+                                                    Select months
+                                                </span>
+                                            ) : (
+                                                <div className="flex flex-wrap gap-1">
+                                                    {formData.paymentMonths.map((month) => (
+                                                        <Badge
+                                                            key={month}
+                                                            variant="secondary"
+                                                            className="text-xs"
+                                                        >
+                                                            {month}
+                                                            <button
+                                                                type="button"
+                                                                className="ml-1 hover:text-destructive"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    toggleMonth(month);
+                                                                }}
+                                                            >
+                                                                <X className="h-3 w-3" />
+                                                            </button>
+                                                        </Badge>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-80 p-0" align="start">
+                                        <div className="p-4 space-y-2">
+                                            <div className="flex items-center justify-between mb-2">
+                                                <Label className="font-semibold">
+                                                    Select Months
+                                                </Label>
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() =>
+                                                        setFormData((prev) => ({
+                                                            ...prev,
+                                                            paymentMonths: [],
+                                                        }))
+                                                    }
+                                                    className="h-8 px-2 text-xs"
                                                 >
-                                                    {month}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectGroup>
-                                    </SelectContent>
-                                </Select>
+                                                    Clear all
+                                                </Button>
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-2 max-h-64 overflow-y-auto">
+                                                {months.map((month) => (
+                                                    <div
+                                                        key={month}
+                                                        className="flex items-center space-x-2"
+                                                    >
+                                                        <Checkbox
+                                                            id={month}
+                                                            checked={formData.paymentMonths.includes(
+                                                                month
+                                                            )}
+                                                            onCheckedChange={() =>
+                                                                toggleMonth(month)
+                                                            }
+                                                        />
+                                                        <label
+                                                            htmlFor={month}
+                                                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                                                        >
+                                                            {month}
+                                                        </label>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </PopoverContent>
+                                </Popover>
+                                {formData.paymentMonths.length > 0 && (
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                        {formData.paymentMonths.length} month
+                                        {formData.paymentMonths.length > 1 ? "s" : ""}{" "}
+                                        selected
+                                    </p>
+                                )}
                             </div>
                         </div>
 
@@ -496,41 +606,58 @@ export default function AddPaymentDialog() {
                         </div>
 
                         {/* ✅ Summary Display */}
-                        {formData.receivableAmount > 0 && (
+                        {formData.receivableAmount > 0 && formData.paymentMonths.length > 0 && (
                             <div className="bg-secondary p-4 rounded-lg">
                                 <h3 className="font-semibold mb-2">
                                     Payment Summary
                                 </h3>
                                 <div className="space-y-1 text-sm">
+                                    <div className="flex justify-between text-muted-foreground">
+                                        <span>Selected Months:</span>
+                                        <span className="font-medium text-foreground">
+                                            {formData.paymentMonths.length} month{formData.paymentMonths.length > 1 ? "s" : ""}
+                                        </span>
+                                    </div>
                                     <div className="flex justify-between">
-                                        <span>Receivable Amount:</span>
+                                        <span>Per Month Receivable:</span>
                                         <span>
                                             PKR{" "}
                                             {formData.receivableAmount.toLocaleString()}
                                         </span>
                                     </div>
                                     <div className="flex justify-between">
-                                        <span>Received Amount:</span>
+                                        <span>Per Month Received:</span>
                                         <span>
                                             PKR{" "}
                                             {formData.receivedAmount.toLocaleString()}
                                         </span>
                                     </div>
+                                    <div className="flex justify-between border-t pt-1 font-semibold text-blue-600">
+                                        <span>Total Receivable:</span>
+                                        <span>
+                                            PKR{" "}
+                                            {(formData.receivableAmount * formData.paymentMonths.length).toLocaleString()}
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between font-semibold text-green-600">
+                                        <span>Total Received:</span>
+                                        <span>
+                                            PKR{" "}
+                                            {(formData.receivedAmount * formData.paymentMonths.length).toLocaleString()}
+                                        </span>
+                                    </div>
                                     <div className="flex justify-between font-semibold border-t pt-1">
-                                        <span>Pending Amount:</span>
+                                        <span>Total Pending:</span>
                                         <span
                                             className={`${
-                                                formData.receivableAmount -
-                                                    formData.receivedAmount >
-                                                0
+                                                (formData.receivableAmount - formData.receivedAmount) * formData.paymentMonths.length > 0
                                                     ? "text-red-500"
                                                     : "text-green-500"
                                             }`}
                                         >
                                             PKR{" "}
                                             {(
-                                                formData.receivableAmount -
-                                                formData.receivedAmount
+                                                (formData.receivableAmount - formData.receivedAmount) * formData.paymentMonths.length
                                             ).toLocaleString()}
                                         </span>
                                     </div>

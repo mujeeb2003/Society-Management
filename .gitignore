@@ -26,6 +26,7 @@ dist-ssr
 maintenance.xlsx
 Data FGP.xlsx
 Data FGP.pdf
+management.rar
 backend\db\society_payments.db
 node_modules
 # Keep environment variables out of version control

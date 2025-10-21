@@ -8,11 +8,11 @@ async function importOneTimePayments() {
     try {
         console.log("📊 Reading Excel file for one-time payments...");
 
-        const workbook = xlsx.readFile("./prisma/2024.xlsx");
+        const workbook = xlsx.readFile("./prisma/Book1.xlsx");
         const worksheet = workbook.Sheets[workbook.SheetNames[0]];
         const data = xlsx.utils.sheet_to_json(worksheet, { header: 1 });
 
-        console.log(`📋 Found ${data.length} rows in Excel file`);
+        // console.log(`📋 Found ${data.length} rows in Excel file`);
 
         // Get payment categories
         const waterConnection5000Category = await prisma.paymentCategory.findFirst({
@@ -29,6 +29,7 @@ async function importOneTimePayments() {
         }
 
         const headers = data[0];
+        // console.log(`🔍 Headers found: ${headers.join(", ")}`);
 
         // Find column indices for one-time payments
         const waterConnection5000Index = headers.findIndex(
@@ -38,9 +39,9 @@ async function importOneTimePayments() {
             (h) => h === "NEW WATER CONNECTION 2000/-"
         );
 
-        console.log(
-            `🔍 Column indices - Water Connection 5000: ${waterConnection5000Index}, Water Connection 2000: ${waterConnection2000Index}`
-        );
+        // console.log(
+        //     `🔍 Column indices - Water Connection 5000: ${waterConnection5000Index}, Water Connection 2000: ${waterConnection2000Index}`
+        // );
 
         let importedCount = 0;
         let skippedCount = 0;
@@ -49,7 +50,7 @@ async function importOneTimePayments() {
             const row = data[i];
             const villaNumber = row[1];
             const owner = row[2];
-
+            // console.log(`Processing row ${i+1} - ${JSON.stringify(row)}`);
             if (!villaNumber || !owner || villaNumber === "N/A") {
                 skippedCount++;
                 continue;
@@ -60,7 +61,7 @@ async function importOneTimePayments() {
                 const villa = await prisma.villa.findFirst({
                     where: { villaNumber: villaNumber },
                 });
-
+                // console.log(`🏠 Processing villa: ${villaNumber} - Owner: ${owner} - ${villa}. waterConnection5000Index - ${waterConnection5000Index}, waterConnection2000Index - ${waterConnection2000Index}`);
                 if (!villa) {
                     console.log(`⚠️ Villa not found: ${villaNumber}`);
                     skippedCount++;
@@ -72,7 +73,7 @@ async function importOneTimePayments() {
                 // Process Water Connection 5000
                 if (waterConnection5000Index !== -1) {
                     const amount = row[waterConnection5000Index];
-                    if (amount == 0) {
+                    if (amount >= 0) {
                         payments.push({
                             villaId: villa.id,
                             categoryId: waterConnection5000Category.id,
@@ -90,7 +91,7 @@ async function importOneTimePayments() {
                 // Process Water Connection 2000
                 if (waterConnection2000Index !== -1) {
                     const amount = row[waterConnection2000Index];
-                    if (amount == 0) {
+                    if (amount >= 0) {
                         payments.push({
                             villaId: villa.id,
                             categoryId: waterConnection2000Category.id,
@@ -124,6 +125,7 @@ async function importOneTimePayments() {
                 // }
 
                 // Insert payments
+                console.log(JSON.stringify(payments));
                 for (const payment of payments) {
                     await prisma.payment.create({
                         data: payment,

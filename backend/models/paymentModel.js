@@ -195,8 +195,7 @@ export class PaymentModel {
                 where: { id: existingPayment.id },
                 data: {
                     receivedAmount:
-                        existingPayment.receivedAmount +
-                        parseFloat(data.receivedAmount),
+                        parseFloat(existingPayment.receivedAmount) + parseFloat(data.receivedAmount),
                     paymentDate: new Date(data.paymentDate),
                     notes: data.notes
                         ? `${existingPayment.notes || ""}\n${data.notes}`

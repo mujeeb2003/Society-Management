@@ -19,4 +19,16 @@ router.get('/balances', ReportController.getAllMonthlyBalances);
 // Get yearly summary
 router.get('/yearly/:year', ReportController.getYearlySummary);
 
+// Generate villa-wise annual report
+router.get('/villa/:villaId/:year', ReportController.generateVillaReport);
+
+// Export villa-wise report to Excel
+router.get('/villa/:villaId/:year/export', ReportController.exportVillaReport);
+
+// Generate pending payments report
+router.get('/pending', ReportController.generatePendingPaymentsReport);
+
+// Export pending payments report to Excel
+router.get('/pending/export', ReportController.exportPendingPaymentsReport);
+
 export default router;

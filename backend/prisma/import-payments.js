@@ -212,7 +212,7 @@ async function importMonthlyPayments() {
     try {
         console.log("📊 Reading Excel file for monthly payments...");
 
-        const workbook = xlsx.readFile("./prisma/2025.xlsx");
+        const workbook = xlsx.readFile("./prisma/Book1.xlsx");
         const worksheet = workbook.Sheets[workbook.SheetNames[0]];
         const data = xlsx.utils.sheet_to_json(worksheet, { header: 1 });
 
@@ -235,16 +235,16 @@ async function importMonthlyPayments() {
 
         // Define months to find in the Excel
         const monthsToFind = [
-            // "Jan-25",
-            // "Feb-25", 
-            // "Mar-25",
-            // "Apr-25",
-            // "May-25",
-            // "Jun-25",
+            "Jan-25",
+            "Feb-25", 
+            "Mar-25",
+            "Apr-25",
+            "May-25",
+            "Jun-25",
             "Jul-25",
-            // "Aug-25",
-            // "Sep-25",
-            // "Oct-25",
+            "Aug-25",
+            "Sep-25",
+            "Oct-25",
             // "Nov-25",
             // "Dec-25",
         ];
