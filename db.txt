@@ -1,0 +1,117 @@
+ftotp_trustipinfo
+ftotp_u2f_loginfo
+ftotp_u2fapp
+ftotp_u2finfo
+ftotp_user_agentinfo
+ftotp_user_apply
+ftotp_user_group
+ftotp_user_token
+ftotp_usersource
+ftotp_admin_log
+ftotp_agentconf
+ftotp_backend
+ftotp_configinfo
+ftotp_domaininfo
+ftotp_emailinfo
+ftotp_forbidden_pwd
+ftotp_group
+ftotp_group_agentinfo
+ftotp_keystore
+ftotp_loginfo
+ftotp_monitorinfo
+ftotp_orgunitinfo
+ftotp_portal_notice
+ftotp_pwd_confpolicy
+ftotp_pwd_history
+ftotp_rad_profile
+ftotp_roleinfo
+ftotp_smsinfo
+
+ftotp_smscode
+ftotp_tokencount
+ftotp_admin_orgunit
+ftotp_assertion_key
+ftotp_assertion
+ftotp_logo_config
+
+
+
+//add these names instead of departments, employees and add others. 
+
+-- Reseed the identity to the next ODD number greater than the max existing ID.
+
+// Node 1
+DBCC CHECKIDENT ('ftotp_trustipinfo', RESEED, 3);
+DBCC CHECKIDENT ('ftotp_u2f_loginfo', RESEED, 1);
+DBCC CHECKIDENT ('ftotp_u2fapp', RESEED, 1);
+DBCC CHECKIDENT ('ftotp_u2finfo', RESEED, 1);
+DBCC CHECKIDENT ('ftotp_user_agentinfo', RESEED, 1);
+DBCC CHECKIDENT ('ftotp_user_apply', RESEED, 1);
+DBCC CHECKIDENT ('ftotp_user_group', RESEED, 1);
+DBCC CHECKIDENT ('ftotp_user_token', RESEED, 9);    
+DBCC CHECKIDENT ('ftotp_usersource', RESEED, 3);
+DBCC CHECKIDENT ('ftotp_admin_log', RESEED, 2025);
+DBCC CHECKIDENT ('ftotp_agentconf', RESEED, 3);
+DBCC CHECKIDENT ('ftotp_backend', RESEED, 1);
+DBCC CHECKIDENT ('ftotp_configinfo', RESEED, 135);
+DBCC CHECKIDENT ('ftotp_domaininfo', RESEED, 3);
+DBCC CHECKIDENT ('ftotp_emailinfo', RESEED, 3);
+DBCC CHECKIDENT ('ftotp_forbidden_pwd', RESEED, 1);
+DBCC CHECKIDENT ('ftotp_group', RESEED, 1);
+DBCC CHECKIDENT ('ftotp_group_agentinfo', RESEED, 1);
+DBCC CHECKIDENT ('ftotp_keystore', RESEED, 1);
+DBCC CHECKIDENT ('ftotp_loginfo', RESEED, 1037);
+DBCC CHECKIDENT ('ftotp_monitorinfo', RESEED, 1);
+DBCC CHECKIDENT ('ftotp_orgunitinfo', RESEED, 1);
+DBCC CHECKIDENT ('ftotp_portal_notice', RESEED, 1);
+DBCC CHECKIDENT ('ftotp_pwd_confpolicy', RESEED, 25);
+DBCC CHECKIDENT ('ftotp_pwd_history', RESEED, 7);
+DBCC CHECKIDENT ('ftotp_rad_profile', RESEED, 1);
+DBCC CHECKIDENT ('ftotp_roleinfo', RESEED, 3);
+DBCC CHECKIDENT ('ftotp_smsinfo', RESEED, 1);
+
+DBCC CHECKIDENT ('ftotp_smscode', RESEED, 0);
+DBCC CHECKIDENT ('ftotp_tokencount', RESEED, 0);
+DBCC CHECKIDENT ('ftotp_admin_orgunit', RESEED, 0);
+DBCC CHECKIDENT ('ftotp_assertion_key', RESEED, 0);
+DBCC CHECKIDENT ('ftotp_assertion', RESEED, 0);
+DBCC CHECKIDENT ('ftotp_logo_config', RESEED, 0);
+GO
+
+// Node 2
+DBCC CHECKIDENT ('ftotp_trustipinfo', RESEED, 2);
+DBCC CHECKIDENT ('ftotp_u2f_loginfo', RESEED, 0);
+DBCC CHECKIDENT ('ftotp_u2fapp', RESEED, 0);
+DBCC CHECKIDENT ('ftotp_u2finfo', RESEED, 0);
+DBCC CHECKIDENT ('ftotp_user_agentinfo', RESEED, 0);
+DBCC CHECKIDENT ('ftotp_user_apply', RESEED, 0);
+DBCC CHECKIDENT ('ftotp_user_group', RESEED, 0);
+DBCC CHECKIDENT ('ftotp_user_token', RESEED, 9);    
+DBCC CHECKIDENT ('ftotp_usersource', RESEED, 3);
+DBCC CHECKIDENT ('ftotp_admin_log', RESEED, 2025);
+DBCC CHECKIDENT ('ftotp_agentconf', RESEED, 3);
+DBCC CHECKIDENT ('ftotp_backend', RESEED, 0);
+DBCC CHECKIDENT ('ftotp_configinfo', RESEED, 135);
+DBCC CHECKIDENT ('ftotp_domaininfo', RESEED, 3);
+DBCC CHECKIDENT ('ftotp_emailinfo', RESEED, 3);
+DBCC CHECKIDENT ('ftotp_forbidden_pwd', RESEED, 0);
+DBCC CHECKIDENT ('ftotp_group', RESEED, 0);
+DBCC CHECKIDENT ('ftotp_group_agentinfo', RESEED, 0);
+DBCC CHECKIDENT ('ftotp_keystore', RESEED, 0);
+DBCC CHECKIDENT ('ftotp_loginfo', RESEED, 1037);
+DBCC CHECKIDENT ('ftotp_monitorinfo', RESEED, 0);
+DBCC CHECKIDENT ('ftotp_orgunitinfo', RESEED, 0);
+DBCC CHECKIDENT ('ftotp_portal_notice', RESEED, 0);
+DBCC CHECKIDENT ('ftotp_pwd_confpolicy', RESEED, 25);
+DBCC CHECKIDENT ('ftotp_pwd_history', RESEED, 7);
+DBCC CHECKIDENT ('ftotp_rad_profile', RESEED, 0);
+DBCC CHECKIDENT ('ftotp_roleinfo', RESEED, 3);
+DBCC CHECKIDENT ('ftotp_smsinfo', RESEED, 0);
+
+DBCC CHECKIDENT ('ftotp_smscode', RESEED, 0);
+DBCC CHECKIDENT ('ftotp_tokencount', RESEED, 0);
+DBCC CHECKIDENT ('ftotp_admin_orgunit', RESEED, 0);
+DBCC CHECKIDENT ('ftotp_assertion_key', RESEED, 0);
+DBCC CHECKIDENT ('ftotp_assertion', RESEED, 0);
+DBCC CHECKIDENT ('ftotp_logo_config', RESEED, 0);
+GO

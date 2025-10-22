@@ -605,5 +605,132 @@ export class PaymentModel {
         }
     }
 
+    // Get pending maintenance payments for a villa (for receipt)
+    static async getPendingMaintenancePayments(villaId) {
+        try {
+            const currentDate = new Date();
+            const currentMonth = currentDate.getMonth() + 1;
+            const currentYear = currentDate.getFullYear();
+
+            // Get the oldest payment record for this villa
+            const oldestPayment = await prisma.payment.findFirst({
+                where: {
+                    villaId: parseInt(villaId),
+                },
+                orderBy: [
+                    { paymentYear: 'asc' },
+                    { paymentMonth: 'asc' }
+                ],
+                select: {
+                    paymentMonth: true,
+                    paymentYear: true,
+                }
+            });
+
+            // If no payment record exists, start from January of current year
+            let startMonth = 1;
+            let startYear = currentYear;
+
+            if (oldestPayment) {
+                startMonth = oldestPayment.paymentMonth;
+                startYear = oldestPayment.paymentYear;
+            }
+
+            // Get maintenance category ID
+            const maintenanceCategory = await prisma.paymentCategory.findFirst({
+                where: {
+                    name: {
+                        contains: 'Maintenance Fee'
+                    },
+                    isActive: true,
+                },  
+            });
+
+
+            if (!maintenanceCategory) {
+                return [];
+            }
+
+            // Get all maintenance payments for this villa
+            const payments = await prisma.payment.findMany({
+                where: {
+                    villaId: parseInt(villaId),
+                    categoryId: maintenanceCategory.id,
+                    paymentYear: {
+                        gte: startYear,
+                    },
+                },
+                select: {
+                    paymentMonth: true,
+                    paymentYear: true,
+                    receivableAmount: true,
+                    receivedAmount: true,
+                },
+            });
+
+            // Get standard maintenance amount
+            const standardAmount = await this.getStandardMaintenanceAmount(currentMonth, currentYear);
+
+            // Create a map of existing payments
+            const paymentMap = new Map();
+            payments.forEach(payment => {
+                const key = `${payment.paymentYear}-${payment.paymentMonth}`;
+                paymentMap.set(key, {
+                    receivable: parseFloat(payment.receivableAmount),
+                    received: parseFloat(payment.receivedAmount),
+                });
+            });
+
+            // Check each month from start until current month
+            const pendingPayments = [];
+            let checkMonth = startMonth;
+            let checkYear = startYear;
+
+
+            while (
+                checkYear < currentYear || 
+                (checkYear === currentYear && checkMonth <= currentMonth)
+            ) {
+                const key = `${checkYear}-${checkMonth}`;
+                const payment = paymentMap.get(key);
+
+                if (!payment) {
+                    // No payment record - fully pending
+                    pendingPayments.push({
+                        month: checkMonth,
+                        year: checkYear,
+                        monthName: this.getMonthName(checkMonth),
+                        pendingAmount: standardAmount,
+                        status: 'unpaid',
+                    });
+                } else {
+                    // Payment record exists - check if there's pending amount
+                    const pending = payment.receivable - payment.received;
+                    if (pending > 0) {
+                        pendingPayments.push({
+                            month: checkMonth,
+                            year: checkYear,
+                            monthName: this.getMonthName(checkMonth),
+                            pendingAmount: pending,
+                            status: payment.received > 0 ? 'partial' : 'unpaid',
+                        });
+                    }
+                }
+
+                // Move to next month
+                checkMonth++;
+                if (checkMonth > 12) {
+                    checkMonth = 1;
+                    checkYear++;
+                }
+            }
+
+            return pendingPayments;
+        } catch (error) {
+            console.error("Error getting pending maintenance payments:", error);
+            throw error;
+        }
+    }
+
 
 }

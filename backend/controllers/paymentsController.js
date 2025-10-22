@@ -236,4 +236,30 @@ export class PaymentsController {
             });
         }
     }
+
+    // Get pending maintenance payments for a villa (for receipt)
+    static async getPendingMaintenancePayments(req, res) {
+        try {
+            const { villaId } = req.params;
+
+            if (!villaId) {
+                return res.status(400).json({
+                    error: "Villa ID is required",
+                });
+            }
+
+            const pendingPayments = await PaymentModel.getPendingMaintenancePayments(villaId);
+
+            res.status(200).json({
+                message: "success",
+                data: pendingPayments,
+            });
+        } catch (error) {
+            console.error("Error fetching pending maintenance payments:", error);
+            res.status(500).json({
+                error: "Internal server error",
+                details: error.message,
+            });
+        }
+    }
 }

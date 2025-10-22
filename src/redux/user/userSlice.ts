@@ -266,6 +266,22 @@ export const getPaymentCategories = createAsyncThunk(
     }
 );
 
+export const getPendingMaintenancePayments = createAsyncThunk(
+    "user/getPendingMaintenancePayments",
+    async (villaId: number, { rejectWithValue }) => {
+        try {
+            const response = await axios.get(
+                `${API_URL}/payments/villa/${villaId}/pending-maintenance`
+            );
+            return response.data;
+        } catch (error: any) {
+            return rejectWithValue(
+                error.response?.data || { error: "Something went wrong" }
+            );
+        }
+    }
+);
+
 export const createPaymentCategory = createAsyncThunk(
     "user/createPaymentCategory",
     async (

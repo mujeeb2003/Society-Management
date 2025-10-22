@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/types";
-import { postPayment, getPayments, getVillas } from "@/redux/user/userSlice";
+import { postPayment, getPayments, getVillas, getPendingMaintenancePayments } from "@/redux/user/userSlice";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
@@ -9,6 +9,7 @@ import {
     DialogHeader,
     DialogTitle,
     DialogTrigger,
+    DialogDescription,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import {
@@ -22,7 +23,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Label } from "@/components/ui/label";
-import PaymentReceipt from "@/components/PaymentReceipt";
+import PaymentReceipt from "@/components/paymentReceipts";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
@@ -200,6 +201,19 @@ export default function AddPaymentDialog() {
                 return;
             }
 
+            // ✅ Fetch pending maintenance payments for the villa
+            let pendingPayments: any[] = [];
+            try {
+                const result = await dispatch(getPendingMaintenancePayments(formData.villaId)).unwrap();
+                // Backend returns { message: "success", data: [...] }
+                const dataArray = result?.data || result;
+                pendingPayments = Array.isArray(dataArray) ? dataArray : [];
+            } catch (error) {
+                console.error("Failed to fetch pending payments:", error);
+                // Continue anyway - receipt will show without pending payments
+                pendingPayments = [];
+            }
+
             // ✅ Prepare receipt data for the first month (for display)
             if (successCount > 0) {
                 setReceiptData({
@@ -216,6 +230,7 @@ export default function AddPaymentDialog() {
                     payment_method: formData.paymentMethod,
                     notes: formData.notes,
                     payment_date: new Date().toLocaleDateString(),
+                    pendingPayments: pendingPayments, // Add pending payments to receipt data
                 });
                 setShowReceipt(true);
             }
@@ -274,6 +289,9 @@ export default function AddPaymentDialog() {
                     <DialogTitle className="text-xl font-bold">
                         Add Payment
                     </DialogTitle>
+                    <DialogDescription>
+                        Add a new payment record for a villa
+                    </DialogDescription>
                 </DialogHeader>
 
                 {!showReceipt ? (
@@ -437,6 +455,7 @@ export default function AddPaymentDialog() {
                                 <Popover>
                                     <PopoverTrigger asChild>
                                         <Button
+                                            type="button"
                                             variant="outline"
                                             className="w-full justify-start text-left font-normal"
                                         >
@@ -445,27 +464,9 @@ export default function AddPaymentDialog() {
                                                     Select months
                                                 </span>
                                             ) : (
-                                                <div className="flex flex-wrap gap-1">
-                                                    {formData.paymentMonths.map((month) => (
-                                                        <Badge
-                                                            key={month}
-                                                            variant="secondary"
-                                                            className="text-xs"
-                                                        >
-                                                            {month}
-                                                            <button
-                                                                type="button"
-                                                                className="ml-1 hover:text-destructive"
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    toggleMonth(month);
-                                                                }}
-                                                            >
-                                                                <X className="h-3 w-3" />
-                                                            </button>
-                                                        </Badge>
-                                                    ))}
-                                                </div>
+                                                <span className="text-sm">
+                                                    {formData.paymentMonths.join(", ")}
+                                                </span>
                                             )}
                                         </Button>
                                     </PopoverTrigger>
@@ -518,11 +519,24 @@ export default function AddPaymentDialog() {
                                     </PopoverContent>
                                 </Popover>
                                 {formData.paymentMonths.length > 0 && (
-                                    <p className="text-xs text-muted-foreground mt-1">
-                                        {formData.paymentMonths.length} month
-                                        {formData.paymentMonths.length > 1 ? "s" : ""}{" "}
-                                        selected
-                                    </p>
+                                    <div className="flex flex-wrap gap-1 mt-2">
+                                        {formData.paymentMonths.map((month) => (
+                                            <Badge
+                                                key={month}
+                                                variant="secondary"
+                                                className="text-xs"
+                                            >
+                                                {month}
+                                                <button
+                                                    type="button"
+                                                    className="ml-1 hover:text-destructive"
+                                                    onClick={() => toggleMonth(month)}
+                                                >
+                                                    <X className="h-3 w-3" />
+                                                </button>
+                                            </Badge>
+                                        ))}
+                                    </div>
                                 )}
                             </div>
                         </div>
