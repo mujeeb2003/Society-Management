@@ -212,7 +212,7 @@ async function importMonthlyPayments() {
     try {
         console.log("📊 Reading Excel file for monthly payments...");
 
-        const workbook = xlsx.readFile("./prisma/Book1.xlsx");
+        const workbook = xlsx.readFile("./prisma/Book1-2024.xlsx");
         const worksheet = workbook.Sheets[workbook.SheetNames[0]];
         const data = xlsx.utils.sheet_to_json(worksheet, { header: 1 });
 
@@ -235,18 +235,18 @@ async function importMonthlyPayments() {
 
         // Define months to find in the Excel
         const monthsToFind = [
-            "Jan-25",
-            "Feb-25", 
-            "Mar-25",
-            "Apr-25",
-            "May-25",
-            "Jun-25",
-            "Jul-25",
-            "Aug-25",
-            "Sep-25",
-            "Oct-25",
-            // "Nov-25",
-            // "Dec-25",
+            // "Jan-24",
+            // "Feb-24",
+            "Mar-24",
+            "Apr-24",
+            "May-24",
+            "Jun-24",
+            "Jul-24",
+            "Aug-24",
+            "Sep-24",
+            "Oct-24",
+            "Nov-24",
+            "Dec-24",
         ];
 
         // ✅ Find both received and pending columns for each month
@@ -350,7 +350,7 @@ async function importMonthlyPayments() {
                     }
 
                     // ✅ Only create payment record if there's any activity (receivable > 0)
-                    if (receivable > 0) {
+                    if (receivable >= 0) {
                         const paymentYear = parseInt(year);
                         const paymentDate = new Date(
                             Date.UTC(paymentYear, monthNumber - 1, 1)

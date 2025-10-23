@@ -7,7 +7,7 @@ export class VillaModel {
     static async getAll() {
         return await prisma.villa.findMany({
             orderBy: {
-                villaNumber: "asc",
+                id: "asc",
             },
         });
     }

@@ -194,7 +194,7 @@ export class VillaController {
                         },
                     },
                 },
-                orderBy: { villaNumber: "asc" },
+                orderBy: { id: "asc" },
             });
 
             // Get standard maintenance amount from recent payments (fallback to 4000)
