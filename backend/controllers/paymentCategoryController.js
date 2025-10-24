@@ -4,7 +4,8 @@ export class PaymentCategoryController {
     
     static async getAllCategories(req, res) {
         try {
-            const categories = await PaymentCategoryModel.getAll();
+            const year = req.query.year ? parseInt(req.query.year) : null;
+            const categories = await PaymentCategoryModel.getAll(year);
 
             res.status(200).json({
                 message: "success",

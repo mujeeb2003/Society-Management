@@ -363,7 +363,7 @@ export default function ExpensesManagement() {
             </div>
 
             <Tabs defaultValue="expenses" className="space-y-6">
-                <TabsList className="grid w-full grid-cols-2">
+                {/* <TabsList className="grid w-full grid-cols-2">
                     <TabsTrigger value="expenses">
                         <FileText className="w-4 h-4 mr-2" />
                         Expenses
@@ -372,7 +372,7 @@ export default function ExpensesManagement() {
                         <BarChart3 className="w-4 h-4 mr-2" />
                         Analytics
                     </TabsTrigger>
-                </TabsList>
+                </TabsList> */}
 
                 <TabsContent value="expenses" className="space-y-6">
                     {/* Summary Cards */}

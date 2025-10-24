@@ -70,8 +70,8 @@ export default function Payments() {
     const [currentTablePage, setCurrentTablePage] = useState(1);
 
     const fetchPaymentCategories = useCallback(() => {
-        dispatch(getPaymentCategories());
-    }, [dispatch]);
+        dispatch(getPaymentCategories(parseInt(selectedYear)));
+    }, [dispatch, selectedYear]);
 
     const fetchPayments = useCallback(() => {
         dispatch(getPayments());

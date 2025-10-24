@@ -148,6 +148,7 @@ export default function AddPaymentDialog() {
         try {
             let successCount = 0;
             let failedMonths: string[] = [];
+            let createdPaymentIds: number[] = [];
 
             // Loop through all selected months and create payment for each
             for (const month of formData.paymentMonths) {
@@ -168,7 +169,12 @@ export default function AddPaymentDialog() {
                             `${selectedCategory?.name} payment for ${month}-${formData.paymentYear}`,
                     };
 
-                    await dispatch(postPayment(paymentData)).unwrap();
+                    const result = await dispatch(postPayment(paymentData)).unwrap();
+                    // Store the payment ID from the response
+                    console.log(result);
+                    if (result?.data?.id) {
+                        createdPaymentIds.push(result.data.id);
+                    }
                     successCount++;
                 } catch (error: any) {
                     console.error(`Failed to add payment for ${month}:`, error);
@@ -216,14 +222,24 @@ export default function AddPaymentDialog() {
 
             // ✅ Prepare receipt data for the first month (for display)
             if (successCount > 0) {
+                // Calculate total amounts for multiple months
+                const totalReceivable = formData.receivableAmount * formData.paymentMonths.length;
+                const totalReceived = formData.receivedAmount * formData.paymentMonths.length;
+                const totalPending = totalReceivable - totalReceived;
+                
+                console.log("created payment ids:", JSON.stringify(createdPaymentIds));
                 setReceiptData({
-                    payment_id: Date.now(),
+                    payment_id: createdPaymentIds[0] || Date.now(), // Use first payment ID
+                    payment_ids: createdPaymentIds, // Store all payment IDs
                     villa_number: selectedVilla?.villaNumber,
+                    villa_id: formData.villaId,
                     resident_name: selectedVilla?.residentName,
-                    receivable_amount: formData.receivableAmount,
-                    received_amount: formData.receivedAmount,
-                    pending_amount:
-                        formData.receivableAmount - formData.receivedAmount,
+                    receivable_amount: totalReceivable, // Total for all months
+                    received_amount: totalReceived, // Total for all months
+                    pending_amount: totalPending, // Total pending
+                    per_month_receivable: formData.receivableAmount, // Per month amount
+                    per_month_received: formData.receivedAmount, // Per month amount
+                    months_count: formData.paymentMonths.length,
                     paymentMonth: formData.paymentMonths.join(", "),
                     paymentYear: formData.paymentYear,
                     payment_category: selectedCategory?.name,

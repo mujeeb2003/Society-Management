@@ -21,11 +21,16 @@ interface PendingPayment {
 interface PaymentReceiptProps {
     paymentData: {
         payment_id: number;
+        payment_ids?: number[];
         villa_number: string;
+        villa_id?: number;
         resident_name: string;
         receivable_amount: number;
         received_amount: number;
         pending_amount: number;
+        per_month_receivable?: number;
+        per_month_received?: number;
+        months_count?: number;
         paymentMonth: string;
         paymentYear: string;
         payment_category: string;
@@ -43,20 +48,31 @@ const styles = StyleSheet.create({
         fontFamily: "Helvetica",
     },
     logoContainer: {
+        flexDirection: "row",
         alignItems: "center",
+        justifyContent: "flex-start",
         marginBottom: 10,
+        paddingBottom: 8,
+        borderBottom: "2px solid #1e40af",
     },
     logo: {
-        width: 90,
-        height: 45,
+        width: 70,
+        height: 35,
+        marginRight: 8,
+    },
+    companyName: {
+        fontSize: 14,
+        color: "#1e40af",
+        fontWeight: "bold",
+        flex: 1,
+        textAlign: "left",
     },
     header: {
         marginBottom: 8,
-        borderBottom: "2px solid #1e40af",
         paddingBottom: 5,
     },
     title: {
-        fontSize: 18,
+        fontSize: 16,
         color: "#1e40af",
         textAlign: "center",
         fontWeight: "bold",
@@ -209,12 +225,15 @@ const styles = StyleSheet.create({
 });
 
 const Receipt: React.FC<PaymentReceiptProps> = ({ paymentData }) => {
-    const generateReceiptNumber = (paymentId?: number): string => {
-        if (!paymentId) return "00000000";
-        return paymentId.toString().padStart(8, "0");
+    const generateReceiptNumber = (paymentId?: number, villaNumber?: string): string => {
+        if (!paymentId || !villaNumber) return "00000000";
+        // Format: VILLA-PAYMENTID (e.g., V001-00012345)
+        const villaCode = villaNumber.replace(/[^0-9]/g, '').padStart(3, '0');
+        const paymentCode = paymentId.toString().padStart(8, '0');
+        return `V${villaCode}-${paymentCode}`;
     };
 
-    const receiptNumber = generateReceiptNumber(paymentData.payment_id);
+    const receiptNumber = generateReceiptNumber(paymentData.payment_id, paymentData.villa_number);
     const currentDate = new Date();
     
     // Safely handle pendingPayments - ensure it's an array
@@ -227,11 +246,15 @@ const Receipt: React.FC<PaymentReceiptProps> = ({ paymentData }) => {
         0
     );
 
+    // Check if this is a multi-month payment
+    const isMultiMonth = (paymentData.months_count || 1) > 1;
+
     return (
         <Document>
             <Page size="A4" style={styles.page}>
                 <View style={styles.logoContainer}>
                     <Image style={styles.logo} src="/falaknaz-GP_logo.png" />
+                    <Text style={styles.companyName}>Falaknaz Golden Pebbles</Text>
                 </View>
 
                 <View style={styles.header}>
@@ -293,12 +316,36 @@ const Receipt: React.FC<PaymentReceiptProps> = ({ paymentData }) => {
                 </View>
 
                 <View style={styles.amountSection}>
-                    <View style={styles.amountRow}>
-                        <Text style={styles.amountLabel}>Receivable Amount:</Text>
-                        <Text style={styles.amountValue}>
-                            PKR {paymentData.receivable_amount.toLocaleString()}
-                        </Text>
-                    </View>
+                    {isMultiMonth && paymentData.per_month_receivable && (
+                        <>
+                            <View style={styles.amountRow}>
+                                <Text style={styles.amountLabel}>Per Month Receivable:</Text>
+                                <Text style={styles.amountValue}>
+                                    PKR {paymentData.per_month_receivable.toLocaleString()}
+                                </Text>
+                            </View>
+                            <View style={styles.amountRow}>
+                                <Text style={styles.amountLabel}>Number of Months:</Text>
+                                <Text style={styles.amountValue}>
+                                    {paymentData.months_count}
+                                </Text>
+                            </View>
+                            <View style={[styles.amountRow, { marginTop: 3, paddingTop: 3, borderTop: '1px solid #86efac' }]}>
+                                <Text style={[styles.amountLabel, { fontWeight: 'bold' }]}>Total Receivable:</Text>
+                                <Text style={[styles.amountValue, { fontSize: 11 }]}>
+                                    PKR {paymentData.receivable_amount.toLocaleString()}
+                                </Text>
+                            </View>
+                        </>
+                    )}
+                    {!isMultiMonth && (
+                        <View style={styles.amountRow}>
+                            <Text style={styles.amountLabel}>Receivable Amount:</Text>
+                            <Text style={styles.amountValue}>
+                                PKR {paymentData.receivable_amount.toLocaleString()}
+                            </Text>
+                        </View>
+                    )}
                     <View style={styles.amountRow}>
                         <Text style={styles.amountLabel}>Amount Received:</Text>
                         <Text style={styles.amountValue}>
@@ -354,12 +401,20 @@ const Receipt: React.FC<PaymentReceiptProps> = ({ paymentData }) => {
 };
 
 const PaymentReceipt: React.FC<PaymentReceiptProps> = ({ paymentData }) => {
+    // Generate filename: Villa-PaymentID-Date.pdf
+    const generateFileName = () => {
+        const villaCode = paymentData.villa_number.replace(/[^a-zA-Z0-9]/g, '');
+        const paymentId = paymentData.payment_id;
+        const date = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+        return `Receipt-${villaCode}-${paymentId}-${date}.pdf`;
+    };
+
     return (
         <div className="space-y-4">
             <div className="flex justify-center">
                 <PDFDownloadLink
                     document={<Receipt paymentData={paymentData} />}
-                    fileName={`receipt-${paymentData.villa_number}-${Date.now()}.pdf`}
+                    fileName={generateFileName()}
                     className="w-full max-w-md"
                 >
                     <Button className="w-full">

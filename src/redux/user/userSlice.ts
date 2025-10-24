@@ -254,9 +254,10 @@ export const getVillaSummaries = createAsyncThunk(
 
 export const getPaymentCategories = createAsyncThunk(
     "user/getPaymentCategories",
-    async (_, { rejectWithValue }) => {
+    async (year: number | undefined = undefined, { rejectWithValue }) => {
         try {
-            const response = await axios.get(`${API_URL}/payment-categories`);
+            const params = year ? `?year=${year}` : '';
+            const response = await axios.get(`${API_URL}/payment-categories${params}`);
             return response.data;
         } catch (error: any) {
             return rejectWithValue(

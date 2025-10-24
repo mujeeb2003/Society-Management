@@ -54,7 +54,7 @@ export class PaymentModel {
                     villaNumber: "asc",
                 },
             });
-
+            console.log("Fetched villas with payments:", JSON.stringify(villas, null, 4));
             // Transform the data to match your UI structure
             const transformedData = villas.map((villa) => {
                 // Group payments by category to show latest payment info and calculate totals
@@ -71,6 +71,8 @@ export class PaymentModel {
                     paymentsByCategory[categoryId].payments.push(payment);
                 });
 
+                // Add one time categories that are not recurring based on the created_at field. Check the year and add them only if they match the current year,
+                
                 // Transform each category's payments into the UI format
                 const paymentsStructure = Object.values(paymentsByCategory).map(
                     (categoryGroup) => {

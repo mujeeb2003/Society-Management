@@ -57,7 +57,7 @@ export default function PaymentCategoriesManagement() {
         useState<PaymentCategory | null>(null);
 
     useEffect(() => {
-        dispatch(getPaymentCategories());
+        dispatch(getPaymentCategories(undefined)); // Get all categories for management
     }, [dispatch]);
 
     const resetNewCategory = () => {
@@ -131,7 +131,7 @@ export default function PaymentCategoriesManagement() {
 
             resetNewCategory();
             setIsCreateDialogOpen(false);
-            dispatch(getPaymentCategories());
+            dispatch(getPaymentCategories(undefined));
         } catch (error: any) {
             toast({
                 title: "Failed to create category",
@@ -179,7 +179,7 @@ export default function PaymentCategoriesManagement() {
 
             setIsEditDialogOpen(false);
             setEditingCategory(null);
-            dispatch(getPaymentCategories());
+            dispatch(getPaymentCategories(undefined));
         } catch (error: any) {
             toast({
                 title: "Failed to update category",
@@ -213,7 +213,7 @@ export default function PaymentCategoriesManagement() {
 
             setIsDeleteDialogOpen(false);
             setDeletingCategory(null);
-            dispatch(getPaymentCategories());
+            dispatch(getPaymentCategories(undefined));
         } catch (error: any) {
             toast({
                 title: "Failed to delete category",

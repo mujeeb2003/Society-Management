@@ -133,7 +133,7 @@ export class DashboardController {
                 const villaPayments = await prisma.payment.findMany({
                     where: {
                         villaId: villa.id,
-                        paymentYear: currentYear,
+                        // paymentYear: currentYear,
                         category: { isRecurring: true },
                     },
                 });
