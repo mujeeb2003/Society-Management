@@ -122,6 +122,21 @@ export const postPayment = createAsyncThunk(
     }
 );
 
+export const deletePayment = createAsyncThunk(
+    "user/deletePayment",
+    async (paymentId: number, { rejectWithValue }) => {
+        try {
+            const res = await axios.delete(`${API_URL}/payments/${paymentId}`);
+            return res.data;
+        } catch (err: any) {
+            if (err.response && err.response.data) {
+                return rejectWithValue(err.response.data);
+            }
+            return rejectWithValue({ error: "Something went wrong" });
+        }
+    }
+);
+
 export const getVillas = createAsyncThunk(
     "user/getVillas",
     async (_, { rejectWithValue }) => {
@@ -934,6 +949,16 @@ const userSlice = createSlice({
             state.loading = false;
         });
         builder.addCase(postPayment.rejected, (state, { payload }) => {
+            state.loading = false;
+            state.error = payload as string;
+        });
+        builder.addCase(deletePayment.pending, (state) => {
+            state.loading = true;
+        });
+        builder.addCase(deletePayment.fulfilled, (state) => {
+            state.loading = false;
+        });
+        builder.addCase(deletePayment.rejected, (state, { payload }) => {
             state.loading = false;
             state.error = payload as string;
         });

@@ -54,7 +54,7 @@ export class PaymentModel {
                     villaNumber: "asc",
                 },
             });
-            console.log("Fetched villas with payments:", JSON.stringify(villas, null, 4));
+            // console.log("Fetched villas with payments:", JSON.stringify(villas, null, 4));
             // Transform the data to match your UI structure
             const transformedData = villas.map((villa) => {
                 // Group payments by category to show latest payment info and calculate totals

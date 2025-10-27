@@ -25,6 +25,7 @@ import {
 } from "@/types";
 import { Card } from "@/components/ui/card";
 import AddPaymentDialog from "./dialogs/AddPaymentDialog";
+import DeletePaymentDialog from "./dialogs/DeletePaymentDialog";
 import { getPayments, getPaymentCategories } from "@/redux/user/userSlice";
 import {
     Pagination,
@@ -311,9 +312,36 @@ export default function Payments() {
     };
 
     // ✅ Helper function to determine if values should be displayed as "Waived"
-    const getDisplayValue = (received: number, receivable: number, pending: number, isVacant: boolean) => {
+    const getDisplayValue = (
+        received: number, 
+        receivable: number, 
+        pending: number, 
+        isVacant: boolean,
+        paymentId?: number,
+        villaNumber?: string,
+        categoryName?: string,
+        paymentMonth?: number,
+        paymentYear?: number
+    ) => {
         if (isVacant) return "-";
         if (receivable === 0 && received === 0 && pending === 0) return "Waived";
+        
+        if (received > 0 && paymentId && villaNumber && categoryName && paymentMonth && paymentYear) {
+            return (
+                <div className="flex items-center justify-center gap-1">
+                    <span>{formatCurrency(received)}</span>
+                    <DeletePaymentDialog
+                        paymentId={paymentId}
+                        villaNumber={villaNumber}
+                        categoryName={categoryName}
+                        amount={received}
+                        paymentMonth={paymentMonth}
+                        paymentYear={paymentYear}
+                    />
+                </div>
+            );
+        }
+        
         return received > 0 ? formatCurrency(received) : "-";
     };
 
@@ -541,6 +569,9 @@ export default function Payments() {
                                             const received = categoryPayment?.total_received || 0;
                                             const pending = categoryPayment?.total_pending || 0;
                                             const receivable = categoryPayment?.total_receivable || 0;
+                                            
+                                            // Get the actual payment record for delete functionality
+                                            const paymentRecord = categoryPayment?.all_payments?.[0];
 
                                             return (
                                                 <Fragment key={`${payment.id}-nonrecurring-${category.id}`}>
@@ -551,7 +582,17 @@ export default function Payments() {
                                                                 : "text-muted-foreground"
                                                         }`}
                                                     >
-                                                        {getDisplayValue(received, receivable, pending, !payment.resident_name)}
+                                                        {getDisplayValue(
+                                                            received, 
+                                                            receivable, 
+                                                            pending, 
+                                                            !payment.resident_name,
+                                                            paymentRecord?.id,
+                                                            payment.villa_number,
+                                                            category.name,
+                                                            paymentRecord?.paymentMonth,
+                                                            paymentRecord?.paymentYear
+                                                        )}
                                                     </TableCell>
                                                     <TableCell
                                                         className={
@@ -606,7 +647,17 @@ export default function Payments() {
                                                         >
                                                             {monthStatus === 'future' 
                                                                 ? "-"
-                                                                : getDisplayValue(receivedAmount, receivableAmount, pendingAmount, !payment.resident_name)
+                                                                : getDisplayValue(
+                                                                    receivedAmount, 
+                                                                    receivableAmount, 
+                                                                    pendingAmount, 
+                                                                    !payment.resident_name,
+                                                                    monthPayment?.id,
+                                                                    payment.villa_number,
+                                                                    category.name,
+                                                                    monthPayment?.paymentMonth,
+                                                                    monthPayment?.paymentYear
+                                                                )
                                                             }
                                                         </TableCell>
                                                         <TableCell
