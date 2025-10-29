@@ -26,6 +26,7 @@ import {
 import { Card } from "@/components/ui/card";
 import AddPaymentDialog from "./dialogs/AddPaymentDialog";
 import DeletePaymentDialog from "./dialogs/DeletePaymentDialog";
+import DownloadPaymentReceiptDialog from "./dialogs/DownloadPaymentReceiptDialog";
 import { getPayments, getPaymentCategories } from "@/redux/user/userSlice";
 import {
     Pagination,
@@ -330,6 +331,9 @@ export default function Payments() {
             return (
                 <div className="flex items-center justify-center gap-1">
                     <span>{formatCurrency(received)}</span>
+                    <DownloadPaymentReceiptDialog
+                        paymentId={paymentId}
+                    />
                     <DeletePaymentDialog
                         paymentId={paymentId}
                         villaNumber={villaNumber}

@@ -166,10 +166,10 @@ export default function Reports() {
                             </div>
                             <div>
                                 <CardTitle className="text-2xl font-bold text-foreground">
-                                    Villa-wise Annual Report
+                                    Villa-wise Report
                                 </CardTitle>
                                 <CardDescription className="text-purple-600 text-lg">
-                                    Complete payment history for a specific villa throughout the year
+                                    Complete payment history for a specific villa
                                 </CardDescription>
                                 <Badge className="mt-2 bg-purple-100 text-purple-700 border-purple-200">
                                     Available Now
@@ -208,10 +208,10 @@ export default function Reports() {
                         </div>
                         <div className="bg-white/60 p-3 rounded-lg">
                             <div className="font-semibold text-purple-700">
-                                Yearly Totals
+                                Overall Totals
                             </div>
                             <div className="text-sm text-purple-600">
-                                Annual receivable, received, pending
+                                Total receivable, received, pending
                             </div>
                         </div>
                         <div className="bg-white/60 p-3 rounded-lg">
@@ -234,7 +234,7 @@ export default function Reports() {
                         </Badge>
                         <Badge variant="outline" className="bg-white">
                             <TrendingUp className="h-3 w-3 mr-1" />
-                            Annual Overview
+                            Complete History
                         </Badge>
                     </div>
                 </CardContent>

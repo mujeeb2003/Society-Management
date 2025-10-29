@@ -234,7 +234,7 @@ export class ReportController {
             worksheet.getCell("A9").value = "Current Month Balance:";
             worksheet.getCell("B9").value = parseFloat(
                 monthlyBalance.currentBalance
-            );
+            ) + parseFloat(totalCrossMonthPayments);
 
             ["B5", "B6", "B7", "B8", "B9"].forEach((cell) => {
                 worksheet.getCell(cell).numFmt = "#,##0.00";
@@ -693,22 +693,21 @@ export class ReportController {
         }
     }
 
-    // Generate villa-wise annual report
+    // Generate villa-wise report (complete history)
     static async generateVillaReport(req, res) {
         try {
-            const { villaId, year } = req.params;
+            const { villaId } = req.params;
+            const { status: statusFilter } = req.query; // 'all', 'paid', 'partial', 'unpaid'
 
-            if (!villaId || !year) {
+            if (!villaId) {
                 return res.status(400).json({
                     success: false,
-                    message: "Villa ID and year are required",
+                    message: "Villa ID is required",
                 });
             }
 
             const villaIdInt = parseInt(villaId);
-            const yearInt = parseInt(year);
 
-            // Get villa details
             const villa = await VillaModel.getById(villaIdInt);
             if (!villa) {
                 return res.status(404).json({
@@ -717,62 +716,47 @@ export class ReportController {
                 });
             }
 
-            // Get all payments for this villa in the specified year
-            const payments = await PaymentModel.getByVilla(villaIdInt, {
-                year: yearInt.toString(),
-            });
+            const payments = await PaymentModel.getByVilla(villaIdInt, {});
 
-            // Determine how many months to show
-            const currentDate = new Date();
-            const currentYear = currentDate.getFullYear();
-            const currentMonth = currentDate.getMonth() + 1; // 1-12
-            
-            // If viewing current year, show up to current month; otherwise show all 12 months
-            const maxMonth = yearInt === currentYear ? currentMonth : 12;
+            const monthlyPayments = {};
 
-            // Get standard maintenance amount for reference (from most recent payment or category)
+            if (payments.length > 0) {
+                const firstPaymentDate = payments.reduce((earliest, p) => 
+                    new Date(p.paymentDate) < earliest ? new Date(p.paymentDate) : earliest, 
+                    new Date(payments[0].paymentDate)
+                );
+
+                const startDate = new Date(firstPaymentDate.getFullYear(), firstPaymentDate.getMonth(), 1);
+                const endDate = new Date();
+
+                for (let d = startDate; d <= endDate; d.setMonth(d.getMonth() + 1)) {
+                    const year = d.getFullYear();
+                    const month = d.getMonth() + 1;
+                    const monthKey = `${year}-${String(month).padStart(2, '0')}`;
+                    
+                    monthlyPayments[monthKey] = {
+                        month: monthKey,
+                        monthName: `${d.toLocaleString("default", { month: "long" })} ${year}`,
+                        payments: [],
+                        totalReceivable: 0,
+                        totalReceived: 0,
+                        totalPending: 0,
+                    };
+                }
+            }
+
             let standardReceivableAmount = 0;
             if (payments.length > 0) {
-                // Calculate average receivable from existing payments
-                const totalReceivable = payments.reduce(
-                    (sum, p) => sum + parseFloat(p.receivableAmount),
-                    0
-                );
-                standardReceivableAmount = totalReceivable / payments.length;
+                const recurringPayments = payments.filter(p => p.category?.isRecurring);
+                if (recurringPayments.length > 0) {
+                    standardReceivableAmount = parseFloat(recurringPayments[0].receivableAmount);
+                }
             }
 
-            // If no payments exist, try to get from payment categories (recurring ones)
-            if (standardReceivableAmount === 0) {
-                const recurringCategories = await prisma.paymentCategory.findMany({
-                    where: { isRecurring: true, isActive: true },
-                });
-                standardReceivableAmount = recurringCategories.reduce(
-                    (sum, cat) => sum + parseFloat(cat.defaultAmount || 0),
-                    0
-                );
-            }
-
-            // Group payments by month and category
-            const monthlyPayments = {};
-            for (let month = 1; month <= maxMonth; month++) {
-                monthlyPayments[month] = {
-                    month: month,
-                    monthName: new Date(yearInt, month - 1).toLocaleString(
-                        "default",
-                        { month: "long" }
-                    ),
-                    payments: [],
-                    totalReceivable: 0,
-                    totalReceived: 0,
-                    totalPending: 0,
-                };
-            }
-
-            // Organize payments by month
             payments.forEach((payment) => {
-                const month = payment.paymentMonth;
-                if (monthlyPayments[month]) {
-                    monthlyPayments[month].payments.push({
+                const monthKey = `${payment.paymentYear}-${String(payment.paymentMonth).padStart(2, '0')}`;
+                if (monthlyPayments[monthKey]) {
+                    monthlyPayments[monthKey].payments.push({
                         id: payment.id,
                         categoryName: payment.category?.name || "Unknown",
                         receivableAmount: parseFloat(payment.receivableAmount),
@@ -783,67 +767,76 @@ export class ReportController {
                         paymentStatus: payment.paymentStatus,
                         notes: payment.notes,
                     });
-                    monthlyPayments[month].totalReceivable += parseFloat(
-                        payment.receivableAmount
-                    );
-                    monthlyPayments[month].totalReceived += parseFloat(
-                        payment.receivedAmount
-                    );
-                    monthlyPayments[month].totalPending += parseFloat(
-                        payment.pendingAmount
-                    );
                 }
             });
 
-            // For months with no payment records, infer pending amounts
-            for (let month = 1; month <= maxMonth; month++) {
-                if (monthlyPayments[month].payments.length === 0) {
-                    // No payment record exists for this month
-                    // Look for the most recent month with a payment to infer receivable amount
-                    let inferredReceivable = standardReceivableAmount;
-                    
-                    // Try to get receivable from previous month first
-                    for (let prevMonth = month - 1; prevMonth >= 1; prevMonth--) {
-                        if (monthlyPayments[prevMonth] && monthlyPayments[prevMonth].totalReceivable > 0) {
-                            inferredReceivable = monthlyPayments[prevMonth].totalReceivable;
-                            break;
-                        }
+            Object.keys(monthlyPayments).forEach(monthKey => {
+                const monthData = monthlyPayments[monthKey];
+                if (monthData.payments.length === 0) {
+                    if (standardReceivableAmount > 0) {
+                        monthData.totalReceivable = standardReceivableAmount;
+                        monthData.totalPending = standardReceivableAmount;
                     }
-
-                    // If still 0, try to get from any month in the year with payments
-                    if (inferredReceivable === 0) {
-                        for (let anyMonth = 1; anyMonth <= 12; anyMonth++) {
-                            if (monthlyPayments[anyMonth] && monthlyPayments[anyMonth].totalReceivable > 0) {
-                                inferredReceivable = monthlyPayments[anyMonth].totalReceivable;
-                                break;
-                            }
-                        }
-                    }
-
-                    // Add a pending entry for this month
-                    if (inferredReceivable > 0) {
-                        monthlyPayments[month].totalReceivable = inferredReceivable;
-                        monthlyPayments[month].totalReceived = 0;
-                        monthlyPayments[month].totalPending = inferredReceivable;
-                    }
+                } else {
+                    monthData.totalReceivable = monthData.payments.reduce((sum, p) => sum + p.receivableAmount, 0);
+                    monthData.totalReceived = monthData.payments.reduce((sum, p) => sum + p.receivedAmount, 0);
+                    monthData.totalPending = monthData.payments.reduce((sum, p) => sum + p.pendingAmount, 0);
                 }
+            });
+
+            let finalMonthlyPayments = Object.values(monthlyPayments);
+
+            // Apply status filter if provided
+            if (statusFilter && statusFilter !== 'all') {
+                finalMonthlyPayments = finalMonthlyPayments
+                    .map(monthData => {
+                        const filteredPayments = monthData.payments.filter(
+                            p => p.paymentStatus === statusFilter
+                        );
+                        
+                        // If filtering for 'unpaid', also include months with no payment records but with a receivable amount
+                        if (statusFilter === 'unpaid' && monthData.payments.length === 0 && monthData.totalReceivable > 0) {
+                            return monthData;
+                        }
+
+                        return {
+                            ...monthData,
+                            payments: filteredPayments,
+                        };
+                    })
+                    .filter(monthData => monthData.payments.length > 0 || (statusFilter === 'unpaid' && monthData.totalPending > 0 && monthData.payments.length === 0));
             }
 
-            // Calculate yearly totals
-            const yearlyTotals = {
+
+            const overallTotals = {
                 totalReceivable: 0,
                 totalReceived: 0,
                 totalPending: 0,
-                totalPayments: payments.length,
+                totalPayments: 0,
             };
 
-            Object.values(monthlyPayments).forEach((month) => {
-                yearlyTotals.totalReceivable += month.totalReceivable;
-                yearlyTotals.totalReceived += month.totalReceived;
-                yearlyTotals.totalPending += month.totalPending;
-            });
+            finalMonthlyPayments.forEach((month) => {
+                if (statusFilter && statusFilter !== 'all') {
+                    const monthReceivable = month.payments.reduce((sum, p) => sum + p.receivableAmount, 0);
+                    const monthReceived = month.payments.reduce((sum, p) => sum + p.receivedAmount, 0);
+                    
+                    overallTotals.totalReceivable += monthReceivable;
+                    overallTotals.totalReceived += monthReceived;
+                    overallTotals.totalPayments += month.payments.length;
 
-            // Calculate payment statistics
+                    if (statusFilter === 'unpaid' && month.payments.length === 0) {
+                        overallTotals.totalReceivable += month.totalReceivable;
+                    }
+
+                } else {
+                    overallTotals.totalReceivable += month.totalReceivable;
+                    overallTotals.totalReceived += month.totalReceived;
+                    overallTotals.totalPayments += month.payments.length > 0 ? month.payments.length : (month.totalReceivable > 0 ? 1 : 0);
+                }
+            });
+            overallTotals.totalPending = overallTotals.totalReceivable - overallTotals.totalReceived;
+
+
             const paymentStats = {
                 paidMonths: 0,
                 partialMonths: 0,
@@ -851,16 +844,14 @@ export class ReportController {
             };
 
             Object.values(monthlyPayments).forEach((month) => {
-                if (month.totalReceivable === 0) {
-                    // Skip months with no receivable amount
-                    return;
-                }
-                if (month.totalPending === 0 && month.totalReceived > 0) {
-                    paymentStats.paidMonths++;
-                } else if (month.totalReceived > 0 && month.totalPending > 0) {
-                    paymentStats.partialMonths++;
-                } else if (month.totalPending > 0 && month.totalReceived === 0) {
-                    paymentStats.unpaidMonths++;
+                if (month.totalReceivable > 0) {
+                    if (month.totalPending <= 0) {
+                        paymentStats.paidMonths++;
+                    } else if (month.totalReceived > 0) {
+                        paymentStats.partialMonths++;
+                    } else {
+                        paymentStats.unpaidMonths++;
+                    }
                 }
             });
 
@@ -871,9 +862,8 @@ export class ReportController {
                     residentName: villa.residentName,
                     occupancyType: villa.occupancyType,
                 },
-                year: yearInt,
-                monthlyPayments: Object.values(monthlyPayments),
-                yearlyTotals: yearlyTotals,
+                monthlyPayments: finalMonthlyPayments.sort((a, b) => a.month.localeCompare(b.month)),
+                yearlyTotals: overallTotals,
                 paymentStats: paymentStats,
                 generatedAt: new Date(),
             };
@@ -895,19 +885,17 @@ export class ReportController {
     // Export villa-wise report to Excel
     static async exportVillaReport(req, res) {
         try {
-            const { villaId, year } = req.params;
+            const { villaId } = req.params;
+            const { status: statusFilter } = req.query;
 
-            if (!villaId || !year) {
+            if (!villaId) {
                 return res.status(400).json({
                     success: false,
-                    message: "Villa ID and year are required",
+                    message: "Villa ID is required",
                 });
             }
 
             const villaIdInt = parseInt(villaId);
-            const yearInt = parseInt(year);
-
-            // Get villa details
             const villa = await VillaModel.getById(villaIdInt);
             if (!villa) {
                 return res.status(404).json({
@@ -916,31 +904,42 @@ export class ReportController {
                 });
             }
 
-            // Get all payments for this villa in the specified year
-            const payments = await PaymentModel.getByVilla(villaIdInt, {
-                year: yearInt.toString(),
-            });
-
-            // Determine how many months to show
-            const currentDate = new Date();
-            const currentYear = currentDate.getFullYear();
-            const currentMonth = currentDate.getMonth() + 1; // 1-12
+            const payments = await PaymentModel.getByVilla(villaIdInt, {});
             
-            // If viewing current year, show up to current month; otherwise show all 12 months
-            const maxMonth = yearInt === currentYear ? currentMonth : 12;
+            const monthlyGroups = {};
 
-            // Get standard maintenance amount for reference
-            let standardReceivableAmount = 0;
             if (payments.length > 0) {
-                const totalReceivable = payments.reduce(
-                    (sum, p) => sum + parseFloat(p.receivableAmount),
-                    0
+                const firstPaymentDate = payments.reduce((earliest, p) => 
+                    new Date(p.paymentDate) < earliest ? new Date(p.paymentDate) : earliest, 
+                    new Date(payments[0].paymentDate)
                 );
-                standardReceivableAmount = totalReceivable / payments.length;
+
+                const startDate = new Date(firstPaymentDate.getFullYear(), firstPaymentDate.getMonth(), 1);
+                const endDate = new Date();
+
+                for (let d = startDate; d <= endDate; d.setMonth(d.getMonth() + 1)) {
+                    const year = d.getFullYear();
+                    const month = d.getMonth() + 1;
+                    const monthKey = `${year}-${String(month).padStart(2, '0')}`;
+                    monthlyGroups[monthKey] = [];
+                }
             }
 
-            // If no payments exist, try to get from payment categories
-            if (standardReceivableAmount === 0) {
+            payments.forEach((payment) => {
+                const monthKey = `${payment.paymentYear}-${String(payment.paymentMonth).padStart(2, '0')}`;
+                if (monthlyGroups[monthKey]) {
+                    monthlyGroups[monthKey].push(payment);
+                }
+            });
+
+            let standardReceivableAmount = 0;
+            if (payments.length > 0) {
+                const recurringPayments = payments.filter(p => p.category?.isRecurring);
+                if (recurringPayments.length > 0) {
+                    standardReceivableAmount = parseFloat(recurringPayments[0].receivableAmount);
+                }
+            }
+             if (standardReceivableAmount === 0) {
                 const recurringCategories = await prisma.paymentCategory.findMany({
                     where: { isRecurring: true, isActive: true },
                 });
@@ -950,115 +949,62 @@ export class ReportController {
                 );
             }
 
-            // Group payments by month
-            const monthlyGroups = {};
-            for (let month = 1; month <= maxMonth; month++) {
-                monthlyGroups[month] = [];
-            }
-
-            payments.forEach((payment) => {
-                const monthKey = payment.paymentMonth;
-                if (monthlyGroups[monthKey]) {
-                    monthlyGroups[monthKey].push(payment);
+            Object.keys(monthlyGroups).forEach(monthKey => {
+                if (monthlyGroups[monthKey].length === 0 && standardReceivableAmount > 0) {
+                    const [year, month] = monthKey.split('-').map(Number);
+                    monthlyGroups[monthKey].push({
+                        id: 0,
+                        paymentMonth: month,
+                        paymentYear: year,
+                        category: { name: "Maintenance Fee" },
+                        receivableAmount: standardReceivableAmount,
+                        receivedAmount: 0,
+                        pendingAmount: standardReceivableAmount,
+                        paymentDate: new Date(year, month - 1, 1),
+                        paymentMethod: "N/A",
+                        paymentStatus: "unpaid",
+                    });
                 }
             });
 
-            // For months with no payment records, infer pending amounts
-            for (let month = 1; month <= maxMonth; month++) {
-                if (monthlyGroups[month].length === 0) {
-                    // Look for the most recent month with a payment to get categories and amounts
-                    let inferredPayments = [];
-                    
-                    // Try to get payment structure from previous month first
-                    for (let prevMonth = month - 1; prevMonth >= 1; prevMonth--) {
-                        if (monthlyGroups[prevMonth] && monthlyGroups[prevMonth].length > 0) {
-                            // Clone the payment structure from previous month
-                            inferredPayments = monthlyGroups[prevMonth].map(p => ({
-                                id: 0,
-                                paymentMonth: month,
-                                category: p.category,
-                                receivableAmount: parseFloat(p.receivableAmount),
-                                receivedAmount: 0,
-                                pendingAmount: parseFloat(p.receivableAmount),
-                                paymentDate: new Date(yearInt, month - 1, 1),
-                                paymentMethod: "N/A",
-                                paymentStatus: "unpaid",
-                            }));
-                            break;
-                        }
-                    }
-
-                    // If still no structure found, try to get from any month in the year with payments
-                    if (inferredPayments.length === 0) {
-                        for (let anyMonth = 1; anyMonth <= 12; anyMonth++) {
-                            if (monthlyGroups[anyMonth] && monthlyGroups[anyMonth].length > 0) {
-                                inferredPayments = monthlyGroups[anyMonth].map(p => ({
-                                    id: 0,
-                                    paymentMonth: month,
-                                    category: p.category,
-                                    receivableAmount: parseFloat(p.receivableAmount),
-                                    receivedAmount: 0,
-                                    pendingAmount: parseFloat(p.receivableAmount),
-                                    paymentDate: new Date(yearInt, month - 1, 1),
-                                    paymentMethod: "N/A",
-                                    paymentStatus: "unpaid",
-                                }));
-                                break;
-                            }
-                        }
-                    }
-
-                    // Add the inferred pending entries for this month
-                    if (inferredPayments.length > 0) {
-                        monthlyGroups[month] = inferredPayments;
+            let finalMonthlyGroups = monthlyGroups;
+            if (statusFilter && statusFilter !== 'all') {
+                finalMonthlyGroups = {};
+                for (const monthKey in monthlyGroups) {
+                    const filteredPayments = monthlyGroups[monthKey].filter(p => p.paymentStatus === statusFilter);
+                    if (filteredPayments.length > 0) {
+                        finalMonthlyGroups[monthKey] = filteredPayments;
+                    } else if (statusFilter === 'unpaid' && monthlyGroups[monthKey].every(p => p.receivedAmount === 0)) {
+                        finalMonthlyGroups[monthKey] = monthlyGroups[monthKey];
                     }
                 }
             }
 
             const workbook = new ExcelJS.Workbook();
-            const worksheet = workbook.addWorksheet("Villa Annual Report");
+            const worksheet = workbook.addWorksheet("Villa Report");
 
+            // Styles
             const headerStyle = {
                 font: { bold: true, size: 12 },
                 alignment: { horizontal: "center" },
-                fill: {
-                    type: "pattern",
-                    pattern: "solid",
-                    fgColor: { argb: "FFE6F3FF" },
-                },
-                border: {
-                    top: { style: "thin" },
-                    left: { style: "thin" },
-                    bottom: { style: "thin" },
-                    right: { style: "thin" },
-                },
+                fill: { type: "pattern", pattern: "solid", fgColor: { argb: "FFE6F3FF" } },
+                border: { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } },
             };
-
             const summaryStyle = {
                 font: { bold: true, size: 14 },
                 alignment: { horizontal: "center" },
-                fill: {
-                    type: "pattern",
-                    pattern: "solid",
-                    fgColor: { argb: "FFCCFFCC" },
-                },
+                fill: { type: "pattern", pattern: "solid", fgColor: { argb: "FFCCFFCC" } },
             };
 
             // Title
             worksheet.mergeCells("A1:H1");
-            worksheet.getCell("A1").value = `Villa ${
-                villa.villaNumber
-            } - Annual Payment Report ${yearInt}`;
-            worksheet.getCell("A1").style = {
-                font: { bold: true, size: 16 },
-                alignment: { horizontal: "center" },
-            };
+            worksheet.getCell("A1").value = `Villa ${villa.villaNumber} - Complete Payment Report (${statusFilter || 'All'})`;
+            worksheet.getCell("A1").style = { font: { bold: true, size: 16 }, alignment: { horizontal: "center" } };
 
-            // Villa Information
+            // Villa Info
             worksheet.mergeCells("A3:H3");
             worksheet.getCell("A3").value = "Villa Information";
             worksheet.getCell("A3").style = summaryStyle;
-
             worksheet.getCell("A5").value = "Villa Number:";
             worksheet.getCell("B5").value = villa.villaNumber;
             worksheet.getCell("A6").value = "Resident Name:";
@@ -1068,181 +1014,88 @@ export class ReportController {
 
             let currentRow = 9;
 
-            // Yearly Summary
+            // Overall Summary
             worksheet.mergeCells(`A${currentRow}:H${currentRow}`);
-            worksheet.getCell(`A${currentRow}`).value = "Yearly Summary";
+            worksheet.getCell(`A${currentRow}`).value = "Overall Summary";
             worksheet.getCell(`A${currentRow}`).style = summaryStyle;
-
             currentRow += 2;
 
-            // Calculate yearly totals including inferred pending months
-            const yearlyTotals = {
-                totalReceivable: 0,
-                totalReceived: 0,
-                totalPending: 0,
-            };
-
-            // Use monthlyGroups which includes inferred payments
-            Object.values(monthlyGroups).forEach((monthPayments) => {
-                monthPayments.forEach((payment) => {
-                    yearlyTotals.totalReceivable += parseFloat(
-                        payment.receivableAmount
-                    );
-                    yearlyTotals.totalReceived += parseFloat(
-                        payment.receivedAmount
-                    );
-                    yearlyTotals.totalPending += parseFloat(payment.pendingAmount);
-                });
+            const overallTotals = { totalReceivable: 0, totalReceived: 0, totalPending: 0 };
+            Object.values(finalMonthlyGroups).flat().forEach(p => {
+                overallTotals.totalReceivable += parseFloat(p.receivableAmount);
+                overallTotals.totalReceived += parseFloat(p.receivedAmount);
+                overallTotals.totalPending += parseFloat(p.pendingAmount);
             });
 
-            worksheet.getCell(`A${currentRow}`).value =
-                "Total Receivable Amount:";
-            worksheet.getCell(`B${currentRow}`).value = parseFloat(
-                yearlyTotals.totalReceivable
-            );
-            worksheet.getCell(`B${currentRow}`).numFmt = "#,##0.00";
+            worksheet.getCell(`A${currentRow}`).value = "Total Receivable:";
+            worksheet.getCell(`B${currentRow}`).value = overallTotals.totalReceivable;
+            worksheet.getCell(`A${currentRow + 1}`).value = "Total Received:";
+            worksheet.getCell(`B${currentRow + 1}`).value = overallTotals.totalReceived;
+            worksheet.getCell(`A${currentRow + 2}`).value = "Total Pending:";
+            worksheet.getCell(`B${currentRow + 2}`).value = overallTotals.totalPending;
+            [...Array(3).keys()].forEach(i => worksheet.getCell(`B${currentRow + i}`).numFmt = "#,##0.00");
+            
+            currentRow += 4;
 
-            currentRow++;
-            worksheet.getCell(`A${currentRow}`).value =
-                "Total Received Amount:";
-            worksheet.getCell(`B${currentRow}`).value = parseFloat(
-                yearlyTotals.totalReceived
-            );
-            worksheet.getCell(`B${currentRow}`).numFmt = "#,##0.00";
-
-            currentRow++;
-            worksheet.getCell(`A${currentRow}`).value = "Total Pending Amount:";
-            worksheet.getCell(`B${currentRow}`).value = parseFloat(
-                yearlyTotals.totalPending
-            );
-            worksheet.getCell(`B${currentRow}`).numFmt = "#,##0.00";
-
-            currentRow++;
-            worksheet.getCell(`A${currentRow}`).value = "Total Payments:";
-            worksheet.getCell(`B${currentRow}`).value = payments.length;
-
-            currentRow += 2;
-
-            // Monthly Payment Details
+            // Monthly Details
             worksheet.mergeCells(`A${currentRow}:H${currentRow}`);
-            worksheet.getCell(`A${currentRow}`).value =
-                "Monthly Payment Details";
+            worksheet.getCell(`A${currentRow}`).value = "Monthly Payment Details";
             worksheet.getCell(`A${currentRow}`).style = summaryStyle;
+            currentRow += 1;
 
-            currentRow += 2;
-
-            // Headers
-            const detailHeaders = [
-                "Month",
-                "Category",
-                "Receivable",
-                "Received",
-                "Pending",
-                "Date",
-                "Method",
-                "Status",
-            ];
+            const detailHeaders = ["Month", "Category", "Receivable", "Received", "Pending", "Date", "Method", "Status"];
+            const headerRow = worksheet.getRow(currentRow);
             detailHeaders.forEach((header, index) => {
-                const cell = worksheet.getCell(currentRow, index + 1);
+                const cell = headerRow.getCell(index + 1);
                 cell.value = header;
                 cell.style = headerStyle;
             });
-
             currentRow++;
 
-            // Sort months (use the monthlyGroups already created above)
-            const sortedMonths = Object.keys(monthlyGroups)
-                .map(Number)
-                .sort((a, b) => a - b);
+            const sortedMonths = Object.keys(finalMonthlyGroups).sort();
 
-            sortedMonths.forEach((month) => {
-                const monthPayments = monthlyGroups[month];
-                const monthName = new Date(yearInt, month - 1).toLocaleString(
-                    "default",
-                    { month: "long" }
-                );
+            sortedMonths.forEach((monthKey) => {
+                const monthPayments = finalMonthlyGroups[monthKey];
+                const [year, month] = monthKey.split('-').map(Number);
+                const monthName = new Date(year, month - 1).toLocaleString("default", { month: "long" }) + ` ${year}`;
 
                 monthPayments.forEach((payment, index) => {
-                    worksheet.getCell(currentRow, 1).value =
-                        index === 0 ? monthName : "";
-                    worksheet.getCell(currentRow, 2).value =
-                        payment.category?.name || "Unknown";
-                    worksheet.getCell(currentRow, 3).value = parseFloat(
-                        payment.receivableAmount
-                    );
-                    worksheet.getCell(currentRow, 4).value = parseFloat(
-                        payment.receivedAmount
-                    );
-                    worksheet.getCell(currentRow, 5).value = parseFloat(
-                        payment.pendingAmount
-                    );
-                    worksheet.getCell(currentRow, 6).value = new Date(
-                        payment.paymentDate
-                    ).toLocaleDateString();
-                    worksheet.getCell(currentRow, 7).value =
-                        payment.paymentMethod;
-                    worksheet.getCell(currentRow, 8).value =
-                        payment.paymentStatus.toUpperCase();
-
-                    [3, 4, 5].forEach((col) => {
-                        worksheet.getCell(currentRow, col).numFmt = "#,##0.00";
-                    });
-
+                    worksheet.getCell(currentRow, 1).value = index === 0 ? monthName : "";
+                    worksheet.getCell(currentRow, 2).value = payment.category?.name || "Unknown";
+                    worksheet.getCell(currentRow, 3).value = parseFloat(payment.receivableAmount);
+                    worksheet.getCell(currentRow, 4).value = parseFloat(payment.receivedAmount);
+                    worksheet.getCell(currentRow, 5).value = parseFloat(payment.pendingAmount);
+                    worksheet.getCell(currentRow, 6).value = new Date(payment.paymentDate).toLocaleDateString();
+                    worksheet.getCell(currentRow, 7).value = payment.paymentMethod;
+                    worksheet.getCell(currentRow, 8).value = payment.paymentStatus.toUpperCase();
+                    [3, 4, 5].forEach(col => worksheet.getCell(currentRow, col).numFmt = "#,##0.00");
                     currentRow++;
                 });
 
-                // Month subtotal
                 const monthTotal = {
-                    receivable: monthPayments.reduce(
-                        (sum, p) => sum + parseFloat(p.receivableAmount),
-                        0
-                    ),
-                    received: monthPayments.reduce(
-                        (sum, p) => sum + parseFloat(p.receivedAmount),
-                        0
-                    ),
-                    pending: monthPayments.reduce(
-                        (sum, p) => sum + parseFloat(p.pendingAmount),
-                        0
-                    ),
+                    receivable: monthPayments.reduce((s, p) => s + parseFloat(p.receivableAmount), 0),
+                    received: monthPayments.reduce((s, p) => s + parseFloat(p.receivedAmount), 0),
+                    pending: monthPayments.reduce((s, p) => s + parseFloat(p.pendingAmount), 0),
                 };
 
-                worksheet.getCell(currentRow, 2).value = `${monthName} Total:`;
+                worksheet.getCell(currentRow, 2).value = `Total:`;
                 worksheet.getCell(currentRow, 2).style = { font: { bold: true } };
                 worksheet.getCell(currentRow, 3).value = monthTotal.receivable;
                 worksheet.getCell(currentRow, 4).value = monthTotal.received;
                 worksheet.getCell(currentRow, 5).value = monthTotal.pending;
-
-                [3, 4, 5].forEach((col) => {
-                    worksheet.getCell(currentRow, col).style = {
-                        font: { bold: true },
-                        fill: {
-                            type: "pattern",
-                            pattern: "solid",
-                            fgColor: { argb: "FFFFE6CC" },
-                        },
-                    };
+                [3, 4, 5].forEach(col => {
+                    worksheet.getCell(currentRow, col).style = { font: { bold: true }, fill: { type: "pattern", pattern: "solid", fgColor: { argb: "FFFFE6CC" } } };
                     worksheet.getCell(currentRow, col).numFmt = "#,##0.00";
                 });
-
                 currentRow += 2;
             });
 
-            // Set column widths
-            worksheet.columns.forEach((column) => {
-                column.width = 18;
-            });
+            worksheet.columns.forEach(c => { c.width = 18; });
             worksheet.getColumn(2).width = 25;
 
-            const filename = `Villa_${villa.villaNumber}_Report_${yearInt}.xlsx`;
-            res.setHeader(
-                "Content-Type",
-                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            );
-            res.setHeader(
-                "Content-Disposition",
-                `attachment; filename="${filename}"`
-            );
+            const filename = `Villa_${villa.villaNumber}_Complete_Report.xlsx`;
+            res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
 
             await workbook.xlsx.write(res);
             res.end();

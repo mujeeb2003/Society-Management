@@ -131,6 +131,32 @@ export class PaymentsController {
         }
     }
 
+    // Get single payment by ID (for receipt regeneration)
+    static async getPaymentById(req, res) {
+        try {
+            const { id } = req.params;
+
+            const payment = await PaymentModel.getById(id);
+
+            if (!payment) {
+                return res.status(404).json({
+                    error: "Payment not found",
+                });
+            }
+
+            res.status(200).json({
+                message: "success",
+                data: payment,
+            });
+        } catch (error) {
+            console.error("Error fetching payment by ID:", error);
+            res.status(500).json({
+                error: "Internal server error",
+                details: error.message,
+            });
+        }
+    }
+
     // Get payment summary for date range
     static async getPaymentsSummary(req, res) {
         try {

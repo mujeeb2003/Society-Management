@@ -171,7 +171,7 @@ export default function AddPaymentDialog() {
 
                     const result = await dispatch(postPayment(paymentData)).unwrap();
                     // Store the payment ID from the response
-                    console.log(result);
+                    // console.log(result);
                     if (result?.data?.id) {
                         createdPaymentIds.push(result.data.id);
                     }
@@ -227,7 +227,7 @@ export default function AddPaymentDialog() {
                 const totalReceived = formData.receivedAmount * formData.paymentMonths.length;
                 const totalPending = totalReceivable - totalReceived;
                 
-                console.log("created payment ids:", JSON.stringify(createdPaymentIds));
+                // console.log("created payment ids:", JSON.stringify(createdPaymentIds));
                 setReceiptData({
                     payment_id: createdPaymentIds[0] || Date.now(), // Use first payment ID
                     payment_ids: createdPaymentIds, // Store all payment IDs

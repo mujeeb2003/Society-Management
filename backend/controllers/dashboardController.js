@@ -1,4 +1,5 @@
 import { PrismaClient } from "../generated/prisma/index.js";
+import { PaymentModel } from "../models/paymentModel.js";
 
 const prisma = new PrismaClient();
 
@@ -109,6 +110,18 @@ export class DashboardController {
                 _sum: { amount: true },
                 _count: { id: true },
             });
+
+            // Previous Month Payments carried over to current month
+            const crossMonthPayments = await PaymentModel.getCrossMonthPayments(
+                currentMonth,
+                currentYear
+            );
+
+            const totalCrossMonthPayments = crossMonthPayments.reduce(
+                (sum, payment) =>
+                    sum + parseFloat(payment.received_amount || 0),
+                0
+            );
 
             // 5. Recent Payments (Last 5 transactions)
             const recentPayments = await prisma.payment.findMany({
@@ -274,6 +287,7 @@ export class DashboardController {
                     totalReceived: monthlyReceived,
                     totalReceivable: monthlyReceivable,
                     totalPending: monthlyPending,
+                    previousMonthPayments: totalCrossMonthPayments,
                     collectionRate:
                         monthlyReceivable > 0
                             ? (

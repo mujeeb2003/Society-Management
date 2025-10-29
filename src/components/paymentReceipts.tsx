@@ -426,4 +426,5 @@ const PaymentReceipt: React.FC<PaymentReceiptProps> = ({ paymentData }) => {
     );
 };
 
+export { Receipt };
 export default PaymentReceipt;

@@ -137,6 +137,21 @@ export const deletePayment = createAsyncThunk(
     }
 );
 
+export const getPaymentById = createAsyncThunk(
+    "user/getPaymentById",
+    async (paymentId: number, { rejectWithValue }) => {
+        try {
+            const res = await axios.get(`${API_URL}/payments/${paymentId}`);
+            return res.data;
+        } catch (err: any) {
+            if (err.response && err.response.data) {
+                return rejectWithValue(err.response.data);
+            }
+            return rejectWithValue({ error: "Something went wrong" });
+        }
+    }
+);
+
 export const getVillas = createAsyncThunk(
     "user/getVillas",
     async (_, { rejectWithValue }) => {
@@ -751,12 +766,12 @@ export const getYearlySummary = createAsyncThunk(
 export const generateVillaReport = createAsyncThunk(
     "user/generateVillaReport",
     async (
-        { villaId, year }: { villaId: number; year: number },
+        { villaId, status }: { villaId: number; status?: string },
         { rejectWithValue }
     ) => {
         try {
             const response = await axios.get(
-                `${API_URL}/reports/villa/${villaId}/${year}`
+                `${API_URL}/reports/villa/${villaId}?status=${status || "all"}`
             );
             return response.data;
         } catch (error: any) {
@@ -770,12 +785,14 @@ export const generateVillaReport = createAsyncThunk(
 export const exportVillaReport = createAsyncThunk(
     "user/exportVillaReport",
     async (
-        { villaId, year }: { villaId: number; year: number },
+        { villaId, status }: { villaId: number; status?: string },
         { rejectWithValue }
     ) => {
         try {
             const response = await axios.get(
-                `${API_URL}/reports/villa/${villaId}/${year}/export`,
+                `${API_URL}/reports/villa/${villaId}/export?status=${
+                    status || "all"
+                }`,
                 {
                     responseType: "blob",
                 }
@@ -784,7 +801,7 @@ export const exportVillaReport = createAsyncThunk(
             const url = window.URL.createObjectURL(new Blob([response.data]));
             const link = document.createElement("a");
             link.href = url;
-            link.setAttribute("download", `Villa_Report_${villaId}_${year}.xlsx`);
+            link.setAttribute("download", `Villa_Report_${villaId}.xlsx`);
             document.body.appendChild(link);
             link.click();
             link.remove();

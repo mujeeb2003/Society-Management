@@ -339,6 +339,17 @@ export class PaymentModel {
         });
     }
 
+    // Get payment by ID with full details
+    static async getById(id) {
+        return await prisma.payment.findUnique({
+            where: { id: parseInt(id) },
+            include: {
+                villa: true,
+                category: true,
+            },
+        });
+    }
+
     // Delete payment
     static async delete(id) {
         return await prisma.payment.delete({
@@ -564,6 +575,9 @@ export class PaymentModel {
                     paymentDate: {
                         gte: startDate,
                         lt: endDate,
+                    },
+                    receivedAmount:{
+                        gt: 0
                     },
                     // Condition 2: Payment is NOT for the report month/year
                     NOT: {

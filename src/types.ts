@@ -168,6 +168,7 @@ export interface DashboardStats {
         totalReceivable: number;
         totalPending: number;
         collectionRate: string;
+        previousMonthPayments: number;
     };
     paymentStats: {
         villasFullyPaid: number;

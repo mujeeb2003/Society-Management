@@ -55,9 +55,7 @@ export default function VillaWiseReport({ onBack }: VillaWiseReportProps) {
     const { villas } = useSelector((state: RootState) => state.user);
 
     const [selectedVillaId, setSelectedVillaId] = useState<string>("");
-    const [selectedYear, setSelectedYear] = useState<number>(
-        new Date().getFullYear()
-    );
+    const [selectedStatus, setSelectedStatus] = useState<string>("all");
     const [reportData, setReportData] = useState<VillaReportType | null>(null);
     const [loading, setLoading] = useState(false);
 
@@ -80,7 +78,7 @@ export default function VillaWiseReport({ onBack }: VillaWiseReportProps) {
             const result = await dispatch(
                 generateVillaReport({
                     villaId: parseInt(selectedVillaId),
-                    year: selectedYear,
+                    status: selectedStatus,
                 })
             ).unwrap();
 
@@ -115,7 +113,7 @@ export default function VillaWiseReport({ onBack }: VillaWiseReportProps) {
             await dispatch(
                 exportVillaReport({
                     villaId: reportData.villa.id,
-                    year: selectedYear,
+                    status: selectedStatus,
                 })
             ).unwrap();
 
@@ -177,7 +175,7 @@ export default function VillaWiseReport({ onBack }: VillaWiseReportProps) {
                     </Button>
                     <div>
                         <h1 className="text-3xl font-bold text-foreground">
-                            Villa-wise Annual Report
+                            Villa-wise Report
                         </h1>
                         <p className="text-muted-foreground">
                             Complete payment history for a specific villa
@@ -194,8 +192,8 @@ export default function VillaWiseReport({ onBack }: VillaWiseReportProps) {
                         Report Parameters
                     </CardTitle>
                     <CardDescription>
-                        Select the villa and year for which you want to generate
-                        the report
+                        Select the villa for which you want to generate the
+                        report
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="flex gap-4 items-end">
@@ -228,29 +226,20 @@ export default function VillaWiseReport({ onBack }: VillaWiseReportProps) {
 
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-foreground">
-                            Year
+                            Payment Status
                         </label>
                         <Select
-                            value={selectedYear.toString()}
-                            onValueChange={(value) =>
-                                setSelectedYear(parseInt(value))
-                            }
+                            value={selectedStatus}
+                            onValueChange={setSelectedStatus}
                         >
-                            <SelectTrigger className="w-32">
-                                <SelectValue />
+                            <SelectTrigger className="w-[180px]">
+                                <SelectValue placeholder="Select status" />
                             </SelectTrigger>
                             <SelectContent>
-                                {Array.from(
-                                    { length: 5 },
-                                    (_, i) => new Date().getFullYear() - i
-                                ).map((year) => (
-                                    <SelectItem
-                                        key={year}
-                                        value={year.toString()}
-                                    >
-                                        {year}
-                                    </SelectItem>
-                                ))}
+                                <SelectItem value="all">All</SelectItem>
+                                <SelectItem value="paid">Paid</SelectItem>
+                                <SelectItem value="partial">Partial</SelectItem>
+                                <SelectItem value="unpaid">Unpaid</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
@@ -317,14 +306,14 @@ export default function VillaWiseReport({ onBack }: VillaWiseReportProps) {
                                     </div>
                                 </div>
 
-                                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                                {/* <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                                     <div className="text-sm text-gray-600 font-medium mb-1">
                                         Report Year
                                     </div>
                                     <div className="text-2xl font-bold text-gray-700">
                                         {reportData.year}
                                     </div>
-                                </div>
+                                </div> */}
                             </div>
                         </CardContent>
                     </Card>
@@ -334,7 +323,7 @@ export default function VillaWiseReport({ onBack }: VillaWiseReportProps) {
                         <CardHeader>
                             <CardTitle className="text-foreground flex items-center">
                                 <Calendar className="h-5 w-5 mr-2 text-green-600" />
-                                Yearly Summary - {reportData.year}
+                                Overall Summary
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
@@ -423,13 +412,16 @@ export default function VillaWiseReport({ onBack }: VillaWiseReportProps) {
                                 Monthly Payment Details
                             </CardTitle>
                             <CardDescription className="text-muted-foreground">
-                                Detailed breakdown of payments by month for{" "}
-                                {reportData.year}
+                                Detailed breakdown of payments by month
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
                             {reportData.monthlyPayments
-                                .filter((month) => month.totalReceivable > 0)
+                                .filter(
+                                    (month) =>
+                                        month.totalReceivable > 0 ||
+                                        month.payments.length > 0
+                                )
                                 .map((monthData) => (
                                     <div
                                         key={monthData.month}
@@ -593,7 +585,7 @@ export default function VillaWiseReport({ onBack }: VillaWiseReportProps) {
                             No Report Generated
                         </h3>
                         <p className="text-muted-foreground mb-4">
-                            Select a villa and year, then click "Generate Report"
+                            Select a villa, then click "Generate Report"
                             to view the complete payment history.
                         </p>
                         {selectedVillaId && (
@@ -609,7 +601,6 @@ export default function VillaWiseReport({ onBack }: VillaWiseReportProps) {
                                             v.id.toString() === selectedVillaId
                                     )?.villaNumber
                                 }{" "}
-                                - {selectedYear}
                             </Button>
                         )}
                     </CardContent>
