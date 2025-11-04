@@ -4,11 +4,17 @@ const prisma = new PrismaClient();
 
 export class VillaModel {
     // Get all villas
-    static async getAll() {
+    static async getAll(options = {}) {
+        const { isActive, orderBy = { id: "asc" } } = options;
+        
+        const where = {};
+        if (isActive !== undefined) {
+            where.isActive = isActive;
+        }
+
         return await prisma.villa.findMany({
-            orderBy: {
-                id: "asc",
-            },
+            where: Object.keys(where).length > 0 ? where : undefined,
+            orderBy,
         });
     }
 

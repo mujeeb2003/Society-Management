@@ -249,11 +249,18 @@ export class PaymentModel {
         const payments = await prisma.payment.findMany({
             where,
             include: {
-                villa: true,
-                category: true,
+            villa: true,
+            category: true,
             },
             orderBy: [{ paymentYear: "desc" }, { paymentMonth: "desc" }],
         });
+
+        // Remove paymentMethod field conditionally after fetching
+        if (!filters?.paymentMethod) {
+            payments.forEach(payment => {
+            delete payment.paymentMethod;
+            });
+        }
 
         // Add calculated fields to each payment
         return payments.map((payment) => ({
@@ -466,9 +473,10 @@ export class PaymentModel {
                 paymentYear: year,
             },
             include: {
-                villa: true,
+                villa:true,
                 category: true,
             },
+            orderBy: { villaId: "asc" }
         });
         // Group by villa and calculate totals
         const villaPayments = {};

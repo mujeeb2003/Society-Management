@@ -1,0 +1,933 @@
+{
+    "success": true,
+    "data": {
+        "month": 10,
+        "year": 2025,
+        "monthName": "October",
+        "summary": {
+            "previousBalance": "309000",
+            "totalReceipts": "219000",
+            "totalExpenses": "5000",
+            "currentBalance": "523000",
+            "crossMonthPayments": 0
+        },
+        "villaPayments": [
+            {
+                "villaNumber": "R-02",
+                "residentName": null,
+                "occupancyType": "VACANT",
+                "receivableAmount": 0,
+                "receivedAmount": 0,
+                "pendingAmount": 0,
+                "paymentStatus": "NOT_APPLICABLE"
+            },
+            {
+                "villaNumber": "R-03",
+                "residentName": "MR. ADEEL",
+                "occupancyType": "OWNER",
+                "receivableAmount": 5000,
+                "receivedAmount": 5000,
+                "pendingAmount": 0,
+                "paymentStatus": "PAID"
+            },
+            {
+                "villaNumber": "R-04",
+                "residentName": "MR. TAHA SHAIKH",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 5000,
+                "pendingAmount": 0,
+                "paymentStatus": "PAID"
+            },
+            {
+                "villaNumber": "R-05",
+                "residentName": "MR. AKBAR",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 0,
+                "pendingAmount": 5000,
+                "paymentStatus": "NOT_PAID"
+            },
+            {
+                "villaNumber": "R-06",
+                "residentName": "MR. SHERAZ",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 0,
+                "pendingAmount": 5000,
+                "paymentStatus": "NOT_PAID"
+            },
+            {
+                "villaNumber": "R-07",
+                "residentName": "MR. SAMEER",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 5000,
+                "pendingAmount": 0,
+                "paymentStatus": "PAID"
+            },
+            {
+                "villaNumber": "R-09",
+                "residentName": "MR. MAZHAR",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 5000,
+                "pendingAmount": 0,
+                "paymentStatus": "PAID"
+            },
+            {
+                "villaNumber": "R-10",
+                "residentName": "MR. KAMRAN",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 0,
+                "pendingAmount": 5000,
+                "paymentStatus": "NOT_PAID"
+            },
+            {
+                "villaNumber": "R-11",
+                "residentName": "MR. IMRAN QAZI",
+                "occupancyType": "OWNER",
+                "receivableAmount": 5000,
+                "receivedAmount": 5000,
+                "pendingAmount": 0,
+                "paymentStatus": "PAID"
+            },
+            {
+                "villaNumber": "R-12",
+                "residentName": "MR. UZAIR SIDDIQUI",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 0,
+                "pendingAmount": 5000,
+                "paymentStatus": "NOT_PAID"
+            },
+            {
+                "villaNumber": "R-13",
+                "residentName": "MR. SARMAD",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 0,
+                "pendingAmount": 5000,
+                "paymentStatus": "NOT_PAID"
+            },
+            {
+                "villaNumber": "R-14",
+                "residentName": "MR. KABEER",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 0,
+                "pendingAmount": 5000,
+                "paymentStatus": "NOT_PAID"
+            },
+            {
+                "villaNumber": "R-15",
+                "residentName": "MR. SHAHID MEHMOOD",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 5000,
+                "pendingAmount": 0,
+                "paymentStatus": "PAID"
+            },
+            {
+                "villaNumber": "R-16",
+                "residentName": null,
+                "occupancyType": "VACANT",
+                "receivableAmount": 0,
+                "receivedAmount": 0,
+                "pendingAmount": 0,
+                "paymentStatus": "NOT_APPLICABLE"
+            },
+            {
+                "villaNumber": "R-17",
+                "residentName": "MR. HABIBULLAH",
+                "occupancyType": "OWNER",
+                "receivableAmount": 5000,
+                "receivedAmount": 0,
+                "pendingAmount": 5000,
+                "paymentStatus": "NOT_PAID"
+            },
+            {
+                "villaNumber": "R-18",
+                "residentName": "MR. SHAHID",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 5000,
+                "pendingAmount": 0,
+                "paymentStatus": "PAID"
+            },
+            {
+                "villaNumber": "R-19",
+                "residentName": "MR. SHEHZAD QURESHI",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 5000,
+                "pendingAmount": 0,
+                "paymentStatus": "PAID"
+            },
+            {
+                "villaNumber": "R-20",
+                "residentName": "MR. ASMAR",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 5000,
+                "pendingAmount": 0,
+                "paymentStatus": "PAID"
+            },
+            {
+                "villaNumber": "R-21",
+                "residentName": "Mr. PIR MAKHDOOM",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 5000,
+                "pendingAmount": 0,
+                "paymentStatus": "PAID"
+            },
+            {
+                "villaNumber": "R-22",
+                "residentName": "MR. AMIR / ASIF",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 0,
+                "pendingAmount": 5000,
+                "paymentStatus": "NOT_PAID"
+            },
+            {
+                "villaNumber": "R-23",
+                "residentName": "MR. IKHLAQ",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 5000,
+                "pendingAmount": 0,
+                "paymentStatus": "PAID"
+            },
+            {
+                "villaNumber": "R-24",
+                "residentName": "MR. S. M. SHAFEE",
+                "occupancyType": "OWNER",
+                "receivableAmount": 5000,
+                "receivedAmount": 0,
+                "pendingAmount": 5000,
+                "paymentStatus": "NOT_PAID"
+            },
+            {
+                "villaNumber": "R-25",
+                "residentName": "MR. ZAFAR IQBAL",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 5000,
+                "pendingAmount": 0,
+                "paymentStatus": "PAID"
+            },
+            {
+                "villaNumber": "R-26",
+                "residentName": "MR. OSAMA JAMIL",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 5000,
+                "pendingAmount": 0,
+                "paymentStatus": "PAID"
+            },
+            {
+                "villaNumber": "R-27",
+                "residentName": "MR. AGHA RAZA",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 0,
+                "pendingAmount": 5000,
+                "paymentStatus": "NOT_PAID"
+            },
+            {
+                "villaNumber": "R-28",
+                "residentName": "MR. SHAHID",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 0,
+                "pendingAmount": 5000,
+                "paymentStatus": "NOT_PAID"
+            },
+            {
+                "villaNumber": "R-29",
+                "residentName": "MR. RAEES AHMED",
+                "occupancyType": "OWNER",
+                "receivableAmount": 5000,
+                "receivedAmount": 5000,
+                "pendingAmount": 0,
+                "paymentStatus": "PAID"
+            },
+            {
+                "villaNumber": "R-30",
+                "residentName": "MR. ABUL KAREEM QURESHI",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 5000,
+                "pendingAmount": 0,
+                "paymentStatus": "PAID"
+            },
+            {
+                "villaNumber": "R-31",
+                "residentName": "MR. YASIR",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 5000,
+                "pendingAmount": 0,
+                "paymentStatus": "PAID"
+            },
+            {
+                "villaNumber": "R-36",
+                "residentName": "MR. MUHAMMAD MEHBOOB",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 0,
+                "pendingAmount": 5000,
+                "paymentStatus": "NOT_PAID"
+            },
+            {
+                "villaNumber": "R-37",
+                "residentName": "MR. FAISAL AGHA",
+                "occupancyType": "OWNER",
+                "receivableAmount": 5000,
+                "receivedAmount": 0,
+                "pendingAmount": 5000,
+                "paymentStatus": "NOT_PAID"
+            },
+            {
+                "villaNumber": "R-38",
+                "residentName": "MR. SAGHEER",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 0,
+                "pendingAmount": 5000,
+                "paymentStatus": "NOT_PAID"
+            },
+            {
+                "villaNumber": "R-39",
+                "residentName": "MS. SHAH",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 0,
+                "pendingAmount": 5000,
+                "paymentStatus": "NOT_PAID"
+            },
+            {
+                "villaNumber": "R-40",
+                "residentName": "MR. HASNAIN KAZMI",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 5000,
+                "pendingAmount": 0,
+                "paymentStatus": "PAID"
+            },
+            {
+                "villaNumber": "R-41",
+                "residentName": "MR. IRFAN",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 0,
+                "pendingAmount": 5000,
+                "paymentStatus": "NOT_PAID"
+            },
+            {
+                "villaNumber": "R-42",
+                "residentName": "MR. SALEEM AHMED",
+                "occupancyType": "OWNER",
+                "receivableAmount": 5000,
+                "receivedAmount": 5000,
+                "pendingAmount": 0,
+                "paymentStatus": "PAID"
+            },
+            {
+                "villaNumber": "R-43",
+                "residentName": "MR. MASROOR",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 5000,
+                "pendingAmount": 0,
+                "paymentStatus": "PAID"
+            },
+            {
+                "villaNumber": "R-44",
+                "residentName": "MR. AKBAR ISLAM",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 0,
+                "pendingAmount": 5000,
+                "paymentStatus": "NOT_PAID"
+            },
+            {
+                "villaNumber": "R-45",
+                "residentName": "MR. OSAMA",
+                "occupancyType": "OWNER",
+                "receivableAmount": 5000,
+                "receivedAmount": 0,
+                "pendingAmount": 5000,
+                "paymentStatus": "NOT_PAID"
+            },
+            {
+                "villaNumber": "R-46",
+                "residentName": "MR. FAKHIR",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 0,
+                "pendingAmount": 5000,
+                "paymentStatus": "NOT_PAID"
+            },
+            {
+                "villaNumber": "R-47",
+                "residentName": "MR. SHAMOON",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 0,
+                "pendingAmount": 5000,
+                "paymentStatus": "NOT_PAID"
+            },
+            {
+                "villaNumber": "R-48",
+                "residentName": null,
+                "occupancyType": "VACANT",
+                "receivableAmount": 0,
+                "receivedAmount": 0,
+                "pendingAmount": 0,
+                "paymentStatus": "NOT_APPLICABLE"
+            },
+            {
+                "villaNumber": "R-49",
+                "residentName": "MR. HAMZA BUKHARI",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 0,
+                "pendingAmount": 5000,
+                "paymentStatus": "NOT_PAID"
+            },
+            {
+                "villaNumber": "R-50",
+                "residentName": null,
+                "occupancyType": "VACANT",
+                "receivableAmount": 0,
+                "receivedAmount": 0,
+                "pendingAmount": 0,
+                "paymentStatus": "NOT_APPLICABLE"
+            },
+            {
+                "villaNumber": "R-93",
+                "residentName": "MR. HARIS",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 0,
+                "pendingAmount": 5000,
+                "paymentStatus": "NOT_PAID"
+            },
+            {
+                "villaNumber": "R-94",
+                "residentName": "MR. NAEEM AHMED",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 0,
+                "pendingAmount": 5000,
+                "paymentStatus": "NOT_PAID"
+            },
+            {
+                "villaNumber": "R-95",
+                "residentName": "MS. AZRA",
+                "occupancyType": "OWNER",
+                "receivableAmount": 5000,
+                "receivedAmount": 0,
+                "pendingAmount": 5000,
+                "paymentStatus": "NOT_PAID"
+            },
+            {
+                "villaNumber": "R-96",
+                "residentName": "MR. ADIL",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 0,
+                "pendingAmount": 5000,
+                "paymentStatus": "NOT_PAID"
+            },
+            {
+                "villaNumber": "R-97",
+                "residentName": "MR. RIAZ",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 0,
+                "pendingAmount": 5000,
+                "paymentStatus": "NOT_PAID"
+            },
+            {
+                "villaNumber": "R-98",
+                "residentName": "MR. SHAMEER",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 0,
+                "pendingAmount": 5000,
+                "paymentStatus": "NOT_PAID"
+            },
+            {
+                "villaNumber": "R-99",
+                "residentName": "MR. ABDUL GHANI BALOCH",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 0,
+                "pendingAmount": 5000,
+                "paymentStatus": "NOT_PAID"
+            },
+            {
+                "villaNumber": "R-100",
+                "residentName": "MR. WAQAR",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 5000,
+                "pendingAmount": 0,
+                "paymentStatus": "PAID"
+            },
+            {
+                "villaNumber": "R-101",
+                "residentName": "MR. IJLAL",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 5000,
+                "pendingAmount": 0,
+                "paymentStatus": "PAID"
+            },
+            {
+                "villaNumber": "R-102",
+                "residentName": "MR. AHMED",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 5000,
+                "pendingAmount": 0,
+                "paymentStatus": "PAID"
+            },
+            {
+                "villaNumber": "R-103",
+                "residentName": "MR. MUHAMMAD RAMZAN",
+                "occupancyType": "OWNER",
+                "receivableAmount": 5000,
+                "receivedAmount": 5000,
+                "pendingAmount": 0,
+                "paymentStatus": "PAID"
+            },
+            {
+                "villaNumber": "R-104",
+                "residentName": "MR. MAAZ / WAHAS",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 5000,
+                "pendingAmount": 0,
+                "paymentStatus": "PAID"
+            },
+            {
+                "villaNumber": "R-105",
+                "residentName": "MS. NARGIS SOOMRO",
+                "occupancyType": "OWNER",
+                "receivableAmount": 5000,
+                "receivedAmount": 0,
+                "pendingAmount": 5000,
+                "paymentStatus": "NOT_PAID"
+            },
+            {
+                "villaNumber": "R-106",
+                "residentName": "MR. FAHAD",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 5000,
+                "pendingAmount": 0,
+                "paymentStatus": "PAID"
+            },
+            {
+                "villaNumber": "R-107",
+                "residentName": "MR. SOHAIL",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 5000,
+                "pendingAmount": 0,
+                "paymentStatus": "PAID"
+            },
+            {
+                "villaNumber": "R-108",
+                "residentName": "MR. MUHAMMED ATHER KHAN",
+                "occupancyType": "OWNER",
+                "receivableAmount": 5000,
+                "receivedAmount": 5000,
+                "pendingAmount": 0,
+                "paymentStatus": "PAID"
+            },
+            {
+                "villaNumber": "R-109",
+                "residentName": "MR. SHAHID ZUBAIRI",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 5000,
+                "pendingAmount": 0,
+                "paymentStatus": "PAID"
+            },
+            {
+                "villaNumber": "R-110",
+                "residentName": "MR. ADNAN",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 5000,
+                "pendingAmount": 0,
+                "paymentStatus": "PAID"
+            },
+            {
+                "villaNumber": "R-111",
+                "residentName": null,
+                "occupancyType": "VACANT",
+                "receivableAmount": 0,
+                "receivedAmount": 0,
+                "pendingAmount": 0,
+                "paymentStatus": "NOT_APPLICABLE"
+            },
+            {
+                "villaNumber": "R-112",
+                "residentName": "MR. MALIK MUNEER",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 0,
+                "pendingAmount": 5000,
+                "paymentStatus": "NOT_PAID"
+            },
+            {
+                "villaNumber": "R-113",
+                "residentName": "MR. BILAL",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 0,
+                "pendingAmount": 5000,
+                "paymentStatus": "NOT_PAID"
+            },
+            {
+                "villaNumber": "R-114",
+                "residentName": "Ms. SOFIA - MR. USMAN ALI",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 5000,
+                "pendingAmount": 0,
+                "paymentStatus": "PAID"
+            },
+            {
+                "villaNumber": "R-115",
+                "residentName": "MR. HAMDAN",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 0,
+                "pendingAmount": 5000,
+                "paymentStatus": "NOT_PAID"
+            },
+            {
+                "villaNumber": "R-116",
+                "residentName": "MR. ISHRAT",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 0,
+                "pendingAmount": 5000,
+                "paymentStatus": "NOT_PAID"
+            },
+            {
+                "villaNumber": "R-117",
+                "residentName": "MR. ADNAN ATEEQ",
+                "occupancyType": "OWNER",
+                "receivableAmount": 5000,
+                "receivedAmount": 0,
+                "pendingAmount": 5000,
+                "paymentStatus": "NOT_PAID"
+            },
+            {
+                "villaNumber": "R-118",
+                "residentName": "MR. SOHAIL KAZIM",
+                "occupancyType": "OWNER",
+                "receivableAmount": 5000,
+                "receivedAmount": 5000,
+                "pendingAmount": 0,
+                "paymentStatus": "PAID"
+            },
+            {
+                "villaNumber": "R-119",
+                "residentName": "MR. ZAIN",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 5000,
+                "pendingAmount": 0,
+                "paymentStatus": "PAID"
+            },
+            {
+                "villaNumber": "R-120",
+                "residentName": "MR. AFTAAB",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 0,
+                "pendingAmount": 5000,
+                "paymentStatus": "NOT_PAID"
+            },
+            {
+                "villaNumber": "R-121",
+                "residentName": "MR. ABDUL BARI",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 0,
+                "pendingAmount": 5000,
+                "paymentStatus": "NOT_PAID"
+            },
+            {
+                "villaNumber": "R-122",
+                "residentName": null,
+                "occupancyType": "VACANT",
+                "receivableAmount": 0,
+                "receivedAmount": 0,
+                "pendingAmount": 0,
+                "paymentStatus": "NOT_APPLICABLE"
+            },
+            {
+                "villaNumber": "R-123",
+                "residentName": "MR. SHAHID SHAMSI",
+                "occupancyType": "OWNER",
+                "receivableAmount": 5000,
+                "receivedAmount": 0,
+                "pendingAmount": 5000,
+                "paymentStatus": "NOT_PAID"
+            },
+            {
+                "villaNumber": "R-162",
+                "residentName": "MR. HUMZA",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 0,
+                "pendingAmount": 5000,
+                "paymentStatus": "NOT_PAID"
+            },
+            {
+                "villaNumber": "R-163",
+                "residentName": "MR. HASSAN DAAD KHAN",
+                "occupancyType": "OWNER",
+                "receivableAmount": 5000,
+                "receivedAmount": 5000,
+                "pendingAmount": 0,
+                "paymentStatus": "PAID"
+            },
+            {
+                "villaNumber": "R-164",
+                "residentName": "MR. EJAZ",
+                "occupancyType": "OWNER",
+                "receivableAmount": 5000,
+                "receivedAmount": 5000,
+                "pendingAmount": 0,
+                "paymentStatus": "PAID"
+            },
+            {
+                "villaNumber": "R-165",
+                "residentName": "MR. IMTIAZ",
+                "occupancyType": "OWNER",
+                "receivableAmount": 5000,
+                "receivedAmount": 5000,
+                "pendingAmount": 0,
+                "paymentStatus": "PAID"
+            },
+            {
+                "villaNumber": "R-166",
+                "residentName": "MR. MUZAMMIL",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 5000,
+                "pendingAmount": 0,
+                "paymentStatus": "PAID"
+            },
+            {
+                "villaNumber": "R-167",
+                "residentName": "MR. WAQAS",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 0,
+                "pendingAmount": 5000,
+                "paymentStatus": "NOT_PAID"
+            },
+            {
+                "villaNumber": "R-168",
+                "residentName": "MR. AYAZ",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 5000,
+                "pendingAmount": 0,
+                "paymentStatus": "PAID"
+            },
+            {
+                "villaNumber": "R-169",
+                "residentName": "MR. SAJID",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 0,
+                "pendingAmount": 5000,
+                "paymentStatus": "NOT_PAID"
+            },
+            {
+                "villaNumber": "R-170",
+                "residentName": "MR. ATIF",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 0,
+                "pendingAmount": 5000,
+                "paymentStatus": "NOT_PAID"
+            },
+            {
+                "villaNumber": "R-171",
+                "residentName": "MR. SHAHID",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 5000,
+                "pendingAmount": 0,
+                "paymentStatus": "PAID"
+            },
+            {
+                "villaNumber": "R-172",
+                "residentName": "MR. ZAKI",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 0,
+                "pendingAmount": 5000,
+                "paymentStatus": "NOT_PAID"
+            },
+            {
+                "villaNumber": "R-173",
+                "residentName": "MR. NADEEM",
+                "occupancyType": "OWNER",
+                "receivableAmount": 5000,
+                "receivedAmount": 5000,
+                "pendingAmount": 0,
+                "paymentStatus": "PAID"
+            },
+            {
+                "villaNumber": "R-174",
+                "residentName": "MR. PIR MAKHDOOM",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 5000,
+                "pendingAmount": 0,
+                "paymentStatus": "PAID"
+            },
+            {
+                "villaNumber": "R-175",
+                "residentName": "MR. MIRZA ASIM",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 5000,
+                "pendingAmount": 0,
+                "paymentStatus": "PAID"
+            },
+            {
+                "villaNumber": "R-176",
+                "residentName": "MR. KHALID",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 5000,
+                "pendingAmount": 0,
+                "paymentStatus": "PAID"
+            },
+            {
+                "villaNumber": "R-177",
+                "residentName": null,
+                "occupancyType": "VACANT",
+                "receivableAmount": 0,
+                "receivedAmount": 0,
+                "pendingAmount": 0,
+                "paymentStatus": "NOT_APPLICABLE"
+            },
+            {
+                "villaNumber": "R-179",
+                "residentName": "MR. ATEEQ",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 0,
+                "pendingAmount": 5000,
+                "paymentStatus": "NOT_PAID"
+            },
+            {
+                "villaNumber": "R-180",
+                "residentName": "MR G.M.SYED",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 0,
+                "pendingAmount": 5000,
+                "paymentStatus": "NOT_PAID"
+            },
+            {
+                "villaNumber": "R-181",
+                "residentName": "MS. NIGHAT",
+                "occupancyType": "TENANT",
+                "receivableAmount": 4000,
+                "receivedAmount": 4000,
+                "pendingAmount": 0,
+                "paymentStatus": "PAID"
+            },
+            {
+                "villaNumber": "R-182",
+                "residentName": "MR. AIMAL",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 0,
+                "pendingAmount": 5000,
+                "paymentStatus": "NOT_PAID"
+            },
+            {
+                "villaNumber": "R-183",
+                "residentName": "MR. ZAHEER BUTT",
+                "occupancyType": "OWNER",
+                "receivableAmount": 5000,
+                "receivedAmount": 0,
+                "pendingAmount": 5000,
+                "paymentStatus": "NOT_PAID"
+            },
+            {
+                "villaNumber": "R-184",
+                "residentName": "Mr. ASIM UD-DIN",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 0,
+                "pendingAmount": 5000,
+                "paymentStatus": "NOT_PAID"
+            },
+            {
+                "villaNumber": "R-185",
+                "residentName": "MR. FAISAL AGHA",
+                "occupancyType": "OWNER",
+                "receivableAmount": 5000,
+                "receivedAmount": 0,
+                "pendingAmount": 5000,
+                "paymentStatus": "NOT_PAID"
+            },
+            {
+                "villaNumber": "R-186",
+                "residentName": "MR. KAZIM",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 0,
+                "pendingAmount": 5000,
+                "paymentStatus": "NOT_PAID"
+            },
+            {
+                "villaNumber": "R-187",
+                "residentName": "MR. TEHSEEN",
+                "occupancyType": "TENANT",
+                "receivableAmount": 5000,
+                "receivedAmount": 5000,
+                "pendingAmount": 0,
+                "paymentStatus": "PAID"
+            }
+        ],
+        "expenses": [
+            {
+                "id": 1,
+                "category": "Insurance",
+                "description": "Insurance",
+                "amount": "5000",
+                "expenseDate": "2025-10-13T00:00:00.000Z",
+                "expenseMonth": 10,
+                "expenseYear": 2025,
+                "paymentMethod": "CASH",
+                "createdAt": "2025-11-04T03:57:59.264Z",
+                "updatedAt": "2025-11-04T03:57:59.264Z"
+            }
+        ],
+        "crossMonthPayments": [],
+        "generatedAt": "2025-11-04T03:58:18.579Z"
+    }
+}

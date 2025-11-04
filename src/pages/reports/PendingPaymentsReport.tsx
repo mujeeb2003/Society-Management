@@ -37,7 +37,6 @@ import {
     AlertTriangle,
     TrendingUp,
     Users,
-    DollarSign,
     Calendar,
 } from "lucide-react";
 
@@ -50,10 +49,10 @@ export default function PendingPaymentsReport({ onBack }: PendingPaymentsReportP
     const { toast } = useToast();
 
     const currentDate = new Date();
-    const [selectedMonth, setSelectedMonth] = useState<number>(
+    const [selectedMonth, setSelectedMonth] = useState<number | undefined>(
         currentDate.getMonth() + 1
     );
-    const [selectedYear, setSelectedYear] = useState<number>(
+    const [selectedYear, setSelectedYear] = useState<number | undefined>(
         currentDate.getFullYear()
     );
     const [reportData, setReportData] = useState<PendingPaymentsReportType | null>(null);
@@ -188,7 +187,7 @@ export default function PendingPaymentsReport({ onBack }: PendingPaymentsReportP
                         Report Parameters
                     </CardTitle>
                     <CardDescription>
-                        Select the month and year to view pending payments
+                        Select the month and year to view pending payments, or select "All Time" to see all pending payments
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="flex gap-4 items-end">
@@ -197,15 +196,16 @@ export default function PendingPaymentsReport({ onBack }: PendingPaymentsReportP
                             Month
                         </label>
                         <Select
-                            value={selectedMonth.toString()}
+                            value={selectedMonth?.toString() || "all"}
                             onValueChange={(value) =>
-                                setSelectedMonth(parseInt(value))
+                                setSelectedMonth(value === "all" ? undefined : parseInt(value))
                             }
                         >
                             <SelectTrigger className="w-40">
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
+                                <SelectItem value="all">All Time</SelectItem>
                                 {months.map((month) => (
                                     <SelectItem
                                         key={month.value}
@@ -223,15 +223,17 @@ export default function PendingPaymentsReport({ onBack }: PendingPaymentsReportP
                             Year
                         </label>
                         <Select
-                            value={selectedYear.toString()}
+                            value={selectedYear?.toString() || "all"}
                             onValueChange={(value) =>
-                                setSelectedYear(parseInt(value))
+                                setSelectedYear(value === "all" ? undefined : parseInt(value))
                             }
+                            disabled={!selectedMonth}
                         >
                             <SelectTrigger className="w-32">
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
+                                <SelectItem value="all">All Time</SelectItem>
                                 {Array.from(
                                     { length: 5 },
                                     (_, i) => new Date().getFullYear() - i
@@ -277,7 +279,8 @@ export default function PendingPaymentsReport({ onBack }: PendingPaymentsReportP
                         <CardHeader>
                             <CardTitle className="text-foreground flex items-center">
                                 <AlertTriangle className="h-5 w-5 mr-2 text-red-600" />
-                                Summary - {reportData.monthName} {reportData.year}
+                                Summary - {reportData.monthName}
+                                {reportData.year && ` ${reportData.year}`}
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
@@ -419,40 +422,87 @@ export default function PendingPaymentsReport({ onBack }: PendingPaymentsReportP
                                                                 colSpan={6}
                                                                 className="bg-gray-50"
                                                             >
-                                                                <div className="p-4">
-                                                                    <h4 className="font-semibold mb-2 text-foreground">
-                                                                        Payment Category Breakdown:
-                                                                    </h4>
-                                                                    <div className="space-y-2">
-                                                                        {villa.paymentDetails.map(
-                                                                            (detail, idx) => (
-                                                                                <div
-                                                                                    key={idx}
-                                                                                    className="flex justify-between items-center bg-white p-3 rounded border"
-                                                                                >
-                                                                                    <span className="font-medium">
-                                                                                        {
-                                                                                            detail.categoryName
-                                                                                        }
-                                                                                    </span>
-                                                                                    <div className="flex gap-4 text-sm">
-                                                                                        <span>
-                                                                                            Receivable:{" "}
-                                                                                            {formatCurrency(
-                                                                                                detail.receivableAmount
-                                                                                            )}
+                                                                <div className="p-4 space-y-4">
+                                                                    {/* Payment Category Breakdown */}
+                                                                    <div>
+                                                                        <h4 className="font-semibold mb-2 text-foreground">
+                                                                            Payment Category Breakdown:
+                                                                        </h4>
+                                                                        <div className="space-y-2">
+                                                                            {villa.paymentDetails.map(
+                                                                                (detail, idx) => (
+                                                                                    <div
+                                                                                        key={idx}
+                                                                                        className="flex justify-between items-center bg-white p-3 rounded border"
+                                                                                    >
+                                                                                        <span className="font-medium">
+                                                                                            {
+                                                                                                detail.categoryName
+                                                                                            }
                                                                                         </span>
-                                                                                        <span className="text-red-600 font-semibold">
-                                                                                            Pending:{" "}
-                                                                                            {formatCurrency(
-                                                                                                detail.pendingAmount
-                                                                                            )}
-                                                                                        </span>
+                                                                                        <div className="flex gap-4 text-sm">
+                                                                                            <span>
+                                                                                                Receivable:{" "}
+                                                                                                {formatCurrency(
+                                                                                                    detail.receivableAmount
+                                                                                                )}
+                                                                                            </span>
+                                                                                            <span className="text-red-600 font-semibold">
+                                                                                                Pending:{" "}
+                                                                                                {formatCurrency(
+                                                                                                    detail.pendingAmount
+                                                                                                )}
+                                                                                            </span>
+                                                                                        </div>
                                                                                     </div>
-                                                                                </div>
-                                                                            )
-                                                                        )}
+                                                                                )
+                                                                            )}
+                                                                        </div>
                                                                     </div>
+
+                                                                    {/* Monthly Breakdown - Only for All Time */}
+                                                                    {villa.monthlyBreakdown && villa.monthlyBreakdown.length > 0 && (
+                                                                        <div className="mt-4 pt-4 border-t">
+                                                                            <h4 className="font-semibold mb-3 text-foreground flex items-center">
+                                                                                <Calendar className="h-4 w-4 mr-2" />
+                                                                                Monthly Breakdown:
+                                                                            </h4>
+                                                                            <div className="space-y-3 max-h-96 overflow-y-auto">
+                                                                                {villa.monthlyBreakdown.map(
+                                                                                    (month, monthIdx) => (
+                                                                                        <div
+                                                                                            key={monthIdx}
+                                                                                            className="bg-white p-3 rounded border border-blue-200"
+                                                                                        >
+                                                                                            <div className="flex justify-between items-center mb-2">
+                                                                                                <span className="font-semibold text-blue-700">
+                                                                                                    {month.monthName} {month.year}
+                                                                                                </span>
+                                                                                                <span className="text-red-600 font-bold">
+                                                                                                    Pending: {formatCurrency(month.totalPending)}
+                                                                                                </span>
+                                                                                            </div>
+                                                                                            <div className="pl-4 space-y-1 text-sm">
+                                                                                                {month.categories.map((cat, catIdx) => (
+                                                                                                    <div
+                                                                                                        key={catIdx}
+                                                                                                        className="flex justify-between py-1 border-b border-gray-100 last:border-0"
+                                                                                                    >
+                                                                                                        <span className="text-gray-600">
+                                                                                                            {cat.categoryName}
+                                                                                                        </span>
+                                                                                                        <span className="text-red-500">
+                                                                                                            {formatCurrency(cat.pendingAmount)}
+                                                                                                        </span>
+                                                                                                    </div>
+                                                                                                ))}
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    )
+                                                                                )}
+                                                                            </div>
+                                                                        </div>
+                                                                    )}
                                                                 </div>
                                                             </TableCell>
                                                         </TableRow>
@@ -488,8 +538,7 @@ export default function PendingPaymentsReport({ onBack }: PendingPaymentsReportP
                             No Report Generated
                         </h3>
                         <p className="text-muted-foreground mb-4">
-                            Select a month and year, then click "Generate Report"
-                            to view all villas with pending payments.
+                            Select a month and year, or choose "All Time" to view all pending payments across all months.
                         </p>
                         <Button
                             onClick={handleGenerateReport}
@@ -497,8 +546,9 @@ export default function PendingPaymentsReport({ onBack }: PendingPaymentsReportP
                         >
                             <FileText className="h-4 w-4 mr-2" />
                             Generate Report for{" "}
-                            {months.find((m) => m.value === selectedMonth)?.label}{" "}
-                            {selectedYear}
+                            {!selectedMonth || !selectedYear
+                                ? "All Time"
+                                : `${months.find((m) => m.value === selectedMonth)?.label} ${selectedYear}`}
                         </Button>
                     </CardContent>
                 </Card>

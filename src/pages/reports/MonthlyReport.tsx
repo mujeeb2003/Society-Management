@@ -161,31 +161,7 @@ export default function MonthlyReport({ onBack }: MonthlyReportProps) {
         );
     };
 
-    // ✅ Helper function to safely render expense data
-    const renderExpenseValue = (value: any) => {
-        if (typeof value === "object" && value !== null) {
-            // If it's an object, try to extract meaningful value
-            if (value.total) return formatCurrency(Number(value.total));
-            if (value.amount) return formatCurrency(Number(value.amount));
-            // If object has id, it might be a nested object - return empty
-            if (value.id) return "-";
-            // Try to stringify if it's a simple object
-            return JSON.stringify(value);
-        }
-        if (typeof value === "number") return formatCurrency(value);
-        if (typeof value === "string") return value;
-        return String(value || "-");
-    };
 
-    const renderExpenseCount = (value: any) => {
-        if (typeof value === "object" && value !== null) {
-            if (value.count) return Number(value.count);
-            if (value.total) return 1; // If we have total but no count, assume 1
-            return 0;
-        }
-        if (typeof value === "number") return value;
-        return 0;
-    };
 
     return (
         <div className="p-6 space-y-6">
@@ -406,17 +382,11 @@ export default function MonthlyReport({ onBack }: MonthlyReportProps) {
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {reportData.villaPayments
-                                            .sort((a, b) =>
-                                                a.villaNumber.localeCompare(
-                                                    b.villaNumber
-                                                )
-                                            )
-                                            .map((villa, index) => (
-                                                <TableRow
-                                                    key={index}
-                                                    className="hover:bg-gray-50"
-                                                >
+                                        {reportData.villaPayments.map((villa, index) => (
+                                            <TableRow
+                                                key={index}
+                                                className="hover:bg-gray-50"
+                                            >
                                                     <TableCell className="font-medium">
                                                         {villa.villaNumber}
                                                     </TableCell>
@@ -551,62 +521,100 @@ export default function MonthlyReport({ onBack }: MonthlyReportProps) {
                             <CardHeader>
                                 <CardTitle className="text-foreground flex items-center">
                                     <AlertCircle className="h-5 w-5 mr-2 text-red-600" />
-                                    Monthly Expenses
+                                    Monthly Expenses Summary
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <div className="space-y-3">
-                                    {reportData.expenses &&
-                                    Array.isArray(reportData.expenses) &&
-                                    reportData.expenses.length > 0 ? (
-                                        reportData.expenses.map(
-                                            (expense, index) => {
-                                                const expenseTotal =
-                                                    renderExpenseValue(
-                                                        expense.total
-                                                    );
-                                                const expenseCount =
-                                                    renderExpenseCount(
-                                                        expense.count
-                                                    );
-
-                                                return (
-                                                    <div
-                                                        key={index}
-                                                        className="flex justify-between items-center py-2 border-b border-gray-100"
-                                                    >
-                                                        <span className="text-foreground font-medium">
-                                                            {expense.category ||
-                                                                `Expense ${
-                                                                    index + 1
-                                                                }`}
-                                                        </span>
-                                                        <div className="text-right">
-                                                            <div className="font-semibold">
-                                                                {expenseTotal}
-                                                            </div>
-                                                            <div className="text-xs text-muted-foreground">
-                                                                {expenseCount}{" "}
-                                                                transaction
-                                                                {expenseCount !==
-                                                                1
-                                                                    ? "s"
-                                                                    : ""}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                );
-                                            }
-                                        )
-                                    ) : (
-                                        <div className="text-muted-foreground text-center py-8">
-                                            No expenses recorded for this month
-                                        </div>
-                                    )}
+                                <div className="space-y-2">
+                                    <div className="flex justify-between py-2 border-b border-gray-100">
+                                        <span className="text-foreground">
+                                            Total Expenses:
+                                        </span>
+                                        <span className="font-semibold text-red-600">
+                                            {formatCurrency(
+                                                reportData.summary.totalExpenses
+                                            )}
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between py-2">
+                                        <span className="text-foreground">
+                                            Total Transactions:
+                                        </span>
+                                        <span className="font-semibold">
+                                            {reportData.expenses?.length || 0}
+                                        </span>
+                                    </div>
                                 </div>
                             </CardContent>
                         </Card>
                     </div>
+
+                    {/* Detailed Expenses Table */}
+                    {reportData.expenses && reportData.expenses.length > 0 && (
+                        <Card className="border-gray-200">
+                            <CardHeader>
+                                <CardTitle className="text-foreground flex items-center">
+                                    <AlertCircle className="h-5 w-5 mr-2 text-red-600" />
+                                    Expense Details
+                                </CardTitle>
+                                <CardDescription>
+                                    Detailed breakdown of all expenses for this month
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="rounded-lg border border-gray-200 overflow-hidden">
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow className="bg-gray-50">
+                                                <TableHead className="font-semibold text-foreground">
+                                                    Category
+                                                </TableHead>
+                                                <TableHead className="font-semibold text-foreground">
+                                                    Description
+                                                </TableHead>
+                                                <TableHead className="font-semibold text-foreground">
+                                                    Amount
+                                                </TableHead>
+                                                <TableHead className="font-semibold text-foreground">
+                                                    Date
+                                                </TableHead>
+                                                <TableHead className="font-semibold text-foreground">
+                                                    Payment Method
+                                                </TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {reportData.expenses.map((expense: any) => (
+                                                <TableRow key={expense.id} className="hover:bg-gray-50">
+                                                    <TableCell className="font-medium">
+                                                        {expense.category}
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        {expense.description || '-'}
+                                                    </TableCell>
+                                                    <TableCell className="font-semibold text-red-600">
+                                                        {formatCurrency(parseFloat(expense.amount))}
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        {new Date(expense.expenseDate).toLocaleDateString('en-US', {
+                                                            month: 'short',
+                                                            day: 'numeric',
+                                                            year: 'numeric'
+                                                        })}
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Badge variant="outline">
+                                                            {expense.paymentMethod}
+                                                        </Badge>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )}
                 </div>
             )}
 

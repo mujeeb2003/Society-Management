@@ -318,8 +318,8 @@ export interface VillaReport {
 }
 
 export interface PendingPaymentsReport {
-    month: number;
-    year: number;
+    month: number | null;
+    year: number | null;
     monthName: string;
     summary: {
         totalVillasWithPending: number;
@@ -344,6 +344,23 @@ export interface PendingPaymentsReport {
             receivableAmount: number;
             receivedAmount: number;
             pendingAmount: number;
+            month?: number;
+            year?: number;
+            monthName?: string;
+        }>;
+        monthlyBreakdown?: Array<{
+            month: number;
+            year: number;
+            monthName: string;
+            totalReceivable: number;
+            totalReceived: number;
+            totalPending: number;
+            categories: Array<{
+                categoryName: string;
+                receivableAmount: number;
+                receivedAmount: number;
+                pendingAmount: number;
+            }>;
         }>;
     }>;
     generatedAt: string;
