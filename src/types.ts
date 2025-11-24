@@ -231,6 +231,7 @@ export interface MonthlyReport {
         totalReceipts: number;
         totalExpenses: number;
         currentBalance: number;
+        crossMonthPayments?: number;
     };
     villaPayments: Array<{
         villaNumber: string;

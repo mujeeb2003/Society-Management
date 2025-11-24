@@ -204,7 +204,7 @@ export function Dashboard() {
                                         : "text-red-600"
                                 }`}
                             >
-                                {formatCurrency(quickSummary.netBalance)}
+                                {formatCurrency(dashboardData.monthlyFinancials.previousMonthPayments+quickSummary.monthlyReceived)}
                             </div>
                             <p className="text-xs text-muted-foreground">
                                 {dashboardData.villaStats.totalVillas} total

@@ -10,11 +10,21 @@ import {
 } from "@react-pdf/renderer";
 import { Button } from "@/components/ui/button";
 
+interface PendingCategory {
+    categoryId: number;
+    categoryName: string;
+    receivable: number;
+    received: number;
+    pending: number;
+    status: string;
+}
+
 interface PendingPayment {
     month: number;
     year: number;
     monthName: string;
     pendingAmount: number;
+    categories: PendingCategory[];
     status: string;
 }
 
@@ -174,19 +184,32 @@ const styles = StyleSheet.create({
         textAlign: "center",
     },
     pendingItem: {
-        flexDirection: "row",
-        justifyContent: "space-between",
+        flexDirection: 'row',
+        justifyContent: 'space-between',
         paddingVertical: 1,
         paddingHorizontal: 2,
     },
     pendingMonth: {
+        fontSize: 7,
+        color: '#7f1d1d',
+        fontWeight: 'bold',
+        marginBottom: 2,
+    },
+    pendingCategory: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        paddingVertical: 1,
+        paddingLeft: 8,
+        paddingRight: 2,
+    },
+    pendingCategoryName: {
         fontSize: 6,
-        color: "#7f1d1d",
+        color: '#991b1b',
     },
     pendingAmount: {
         fontSize: 6,
-        color: "#7f1d1d",
-        fontWeight: "bold",
+        color: '#7f1d1d',
+        fontWeight: 'bold',
     },
     pendingTotal: {
         flexDirection: "row",
@@ -365,16 +388,31 @@ const Receipt: React.FC<PaymentReceiptProps> = ({ paymentData }) => {
                 {pendingPaymentsArray.length > 0 && (
                     <View style={styles.pendingSection}>
                         <Text style={styles.pendingSectionTitle}>
-                            Outstanding Maintenance Payments
+                            Outstanding Payments
                         </Text>
                         {pendingPaymentsArray.map((pending, index) => (
-                            <View key={index} style={styles.pendingItem}>
-                                <Text style={styles.pendingMonth}>
-                                    {pending.monthName} {pending.year} ({pending.status})
-                                </Text>
-                                <Text style={styles.pendingAmount}>
-                                    PKR {(pending.pendingAmount || 0).toLocaleString()}
-                                </Text>
+                            <View key={index}>
+                                <View style={styles.pendingItem}>
+                                    <Text style={styles.pendingMonth}>
+                                        {pending.month === 0 
+                                            ? pending.monthName // Non-recurring: show category name only
+                                            : `${pending.monthName} ${pending.year}` // Recurring: show month + year
+                                        }
+                                    </Text>
+                                    {/* <Text style={styles.pendingAmount}>
+                                        PKR {(pending.pendingAmount || 0).toLocaleString()}
+                                    </Text> */}
+                                </View>
+                                {pending.categories && pending.categories.map((category: any, catIndex: number) => (
+                                    <View key={catIndex} style={styles.pendingCategory}>
+                                        <Text style={styles.pendingCategoryName}>
+                                            • {category.categoryName}
+                                        </Text>
+                                        <Text style={styles.pendingAmount}>
+                                            PKR {(category.pending || 0).toLocaleString()}
+                                        </Text>
+                                    </View>
+                                ))}
                             </View>
                         ))}
                         <View style={styles.pendingTotal}>

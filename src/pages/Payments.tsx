@@ -189,7 +189,7 @@ export default function Payments() {
                         month,
                         selectedYear
                     );
-
+                    
                     const key = `recurring-${category.id}-${month}`;
 
                     if (monthPayment) {
@@ -215,6 +215,9 @@ export default function Payments() {
                 const categoryPayment = getNonRecurringPayment(payment, category.id);
                 const key = `nonrecurring-${category.id}`;
 
+                // if(payment.resident_name == "MS. AZRA"){
+                //         console.log('monthPayment for totals:', categoryPayment);
+                //     }
                 if (categoryPayment) {
                     totals.received[key] += categoryPayment.total_received || 0;
                     totals.pending[key] += categoryPayment.total_pending || 0;
@@ -577,6 +580,9 @@ export default function Payments() {
                                             // Get the actual payment record for delete functionality
                                             const paymentRecord = categoryPayment?.all_payments?.[0];
 
+                                            // if(payment.resident_name == "MS. AZRA"){
+                                            //     console.log('rec non-rec pending:', received, receivable, pending, !payment.resident_name)
+                                            // }
                                             return (
                                                 <Fragment key={`${payment.id}-nonrecurring-${category.id}`}>
                                                     <TableCell
@@ -605,7 +611,9 @@ export default function Payments() {
                                                                 : "text-muted-foreground"
                                                         }
                                                     >
-                                                        {getPendingDisplayValue(received, receivable, pending, !payment.resident_name)}
+                                                        {
+                                                            getPendingDisplayValue(received, receivable, pending, !payment.resident_name)
+                                                        }
                                                     </TableCell>
                                                 </Fragment>
                                             );

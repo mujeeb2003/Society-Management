@@ -3,12 +3,14 @@ const prisma = new PrismaClient();
 
 class MonthlyBalance {
     static async create(data) {
+        const { crossMonthAmount, ...dbData } = data;
         return prisma.monthlyBalance.create({
             data: {
-                ...data,
+                ...dbData,
                 currentBalance:
                     data.previousBalance +
-                    data.totalReceipts -
+                    data.totalReceipts +
+                    (crossMonthAmount || 0) -
                     data.totalExpenses,
             },
         });
@@ -25,24 +27,27 @@ class MonthlyBalance {
     }
 
     static async update(where, data) {
+        const { crossMonthAmount, ...dbData } = data;
         // Recalculate current balance if any of the amounts changed
         if (
             data.totalReceipts !== undefined ||
             data.totalExpenses !== undefined ||
-            data.previousBalance !== undefined
+            data.previousBalance !== undefined ||
+            crossMonthAmount !== undefined
         ) {
             const existing = await prisma.monthlyBalance.findUnique({ where });
             if (existing) {
-                data.currentBalance =
+                dbData.currentBalance =
                     (data.previousBalance ?? existing.previousBalance) +
-                    (data.totalReceipts ?? existing.totalReceipts) -
+                    (data.totalReceipts ?? existing.totalReceipts) +
+                    (crossMonthAmount ?? 0) -
                     (data.totalExpenses ?? existing.totalExpenses);
             }
         }
 
         return prisma.monthlyBalance.update({
             where,
-            data,
+            data: dbData,
         });
     }
 
@@ -109,9 +114,35 @@ class MonthlyBalance {
             },
         });
 
+        // Calculate cross month payments (payments made in this month but for other months)
+        const startDate = new Date(year, month - 1, 1);
+        const endDate = new Date(year, month, 1);
+        
+        const crossMonthPayments = await prisma.payment.aggregate({
+            where: {
+                paymentDate: {
+                    gte: startDate,
+                    lt: endDate,
+                },
+                receivedAmount: { gt: 0 },
+                NOT: {
+                    paymentMonth: {
+                        gte: month,
+                    },
+                    paymentYear: year,
+                }
+            },
+            _sum: {
+                receivedAmount: true,
+            }
+        });
+        
+        const crossMonthAmount = parseInt(crossMonthPayments._sum.receivedAmount || 0);
+
         const receiptsAmount = parseInt(totalReceipts._sum.receivedAmount || 0);
         const expensesAmount = parseInt(totalExpenses._sum.amount || 0);
-        const currentBalance = previousAmount + receiptsAmount - expensesAmount;
+        // console.log("Cross Month Amount: ", crossMonthAmount, "receiptsAmount: ", receiptsAmount, "expensesAmount: ", expensesAmount);
+        const currentBalance = previousAmount + receiptsAmount + crossMonthAmount - expensesAmount;
         // console.log(
         //     "Current Balance: ",
         //     currentBalance,
@@ -119,6 +150,8 @@ class MonthlyBalance {
         //     previousAmount,
         //     "Receipts: ",
         //     receiptsAmount,
+        //     "Cross Month: ",
+        //     crossMonthAmount,
         //     "Expenses: ",
         //     expensesAmount
         // );
@@ -136,6 +169,7 @@ class MonthlyBalance {
                     totalExpenses: expensesAmount,
                     previousBalance: parseInt(previousAmount),
                     currentBalance: parseInt(currentBalance),
+                    crossMonthAmount: crossMonthAmount,
                     isGenerated: true,
                     generatedAt: new Date(),
                 }
@@ -148,6 +182,7 @@ class MonthlyBalance {
                 totalExpenses: expensesAmount,
                 previousBalance: previousAmount,
                 currentBalance: currentBalance,
+                crossMonthAmount: crossMonthAmount,
                 isGenerated: true,
                 generatedAt: new Date(),
             });

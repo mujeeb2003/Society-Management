@@ -589,7 +589,9 @@ export class PaymentModel {
                     },
                     // Condition 2: Payment is NOT for the report month/year
                     NOT: {
-                        paymentMonth: reportMonth,
+                        paymentMonth: {
+                            gte: reportMonth
+                        },
                         paymentYear: reportYear,
                     },
                 },
@@ -660,87 +662,144 @@ export class PaymentModel {
                 startYear = oldestPayment.paymentYear;
             }
 
-            // Get maintenance category ID
-            const maintenanceCategory = await prisma.paymentCategory.findFirst({
+            // Get all active categories (both recurring and non-recurring)
+            const activeCategories = await prisma.paymentCategory.findMany({
                 where: {
-                    name: {
-                        contains: 'Maintenance Fee'
-                    },
                     isActive: true,
-                },  
+                },
             });
 
-
-            if (!maintenanceCategory) {
+            if (activeCategories.length === 0) {
                 return [];
             }
 
-            // Get all maintenance payments for this villa
+            // Separate recurring and non-recurring categories
+            const recurringCategories = activeCategories.filter(cat => cat.isRecurring);
+            const nonRecurringCategories = activeCategories.filter(cat => !cat.isRecurring);
+
+            // Get all payments for this villa from start date onwards
             const payments = await prisma.payment.findMany({
                 where: {
                     villaId: parseInt(villaId),
-                    categoryId: maintenanceCategory.id,
                     paymentYear: {
                         gte: startYear,
                     },
                 },
-                select: {
-                    paymentMonth: true,
-                    paymentYear: true,
-                    receivableAmount: true,
-                    receivedAmount: true,
+                include: {
+                    category: true,
                 },
             });
 
-            // Get standard maintenance amount
+            // Get standard maintenance amount (fallback for categories without payment records)
             const standardAmount = await this.getStandardMaintenanceAmount(currentMonth, currentYear);
 
-            // Create a map of existing payments
-            const paymentMap = new Map();
-            payments.forEach(payment => {
-                const key = `${payment.paymentYear}-${payment.paymentMonth}`;
-                paymentMap.set(key, {
-                    receivable: parseFloat(payment.receivableAmount),
-                    received: parseFloat(payment.receivedAmount),
-                });
+            // Create a map to store the standard receivable for each category
+            // We'll use the most recent payment for each category as the standard
+            const categoryStandardAmounts = new Map();
+            activeCategories.forEach(cat => {
+                categoryStandardAmounts.set(cat.id, standardAmount); // Default fallback
             });
 
-            // Check each month from start until current month
+            // Update with actual amounts from recent payments
+            payments.forEach(payment => {
+                if (payment.category) {
+                    const currentStandard = categoryStandardAmounts.get(payment.categoryId);
+                    const paymentAmount = parseFloat(payment.receivableAmount);
+                    // Use the most common/recent receivable amount as standard
+                    if (!currentStandard || paymentAmount > 0) {
+                        categoryStandardAmounts.set(payment.categoryId, paymentAmount);
+                    }
+                }
+            });
+
+            // Create a map of existing payments grouped by month-year-category
+            // Key: "year-month-categoryId", Value: { receivable, received }
+            const paymentMap = new Map();
+            payments.forEach(payment => {
+                const key = `${payment.paymentYear}-${payment.paymentMonth}-${payment.categoryId}`;
+                
+                if (!paymentMap.has(key)) {
+                    paymentMap.set(key, {
+                        receivable: 0,
+                        received: 0,
+                        categoryName: payment.category.name,
+                        categoryId: payment.categoryId,
+                    });
+                }
+                
+                const paymentData = paymentMap.get(key);
+                paymentData.receivable += parseFloat(payment.receivableAmount);
+                paymentData.received += parseFloat(payment.receivedAmount);
+            });
+
+            // Check each month from start until current month for RECURRING categories
             const pendingPayments = [];
             let checkMonth = startMonth;
             let checkYear = startYear;
-
 
             while (
                 checkYear < currentYear || 
                 (checkYear === currentYear && checkMonth <= currentMonth)
             ) {
-                const key = `${checkYear}-${checkMonth}`;
-                const payment = paymentMap.get(key);
+                const monthCategories = [];
+                let monthTotalPending = 0;
 
-                if (!payment) {
-                    // No payment record - fully pending
-                    pendingPayments.push({
-                        month: checkMonth,
-                        year: checkYear,
-                        monthName: this.getMonthName(checkMonth),
-                        pendingAmount: standardAmount,
-                        status: 'unpaid',
-                    });
-                } else {
-                    // Payment record exists - check if there's pending amount
-                    const pending = payment.receivable - payment.received;
-                    if (pending > 0) {
+                // Check each RECURRING category for this month
+                recurringCategories.forEach(category => {
+                    const categoryKey = `${checkYear}-${checkMonth}-${category.id}`;
+                    const categoryPayment = paymentMap.get(categoryKey);
+                    const expectedAmount = categoryStandardAmounts.get(category.id) || standardAmount;
+
+                    if (!categoryPayment) {
+                        // No payment record for this category - fully pending
+                        monthCategories.push({
+                            categoryId: category.id,
+                            categoryName: category.name,
+                            receivable: expectedAmount,
+                            received: 0,
+                            pending: expectedAmount,
+                            status: 'unpaid',
+                        });
+                        monthTotalPending += expectedAmount;
+                    } else {
+                        // Payment record exists - calculate pending
+                        const pending = categoryPayment.receivable - categoryPayment.received;
+                        
+                        // Always add the category to show complete breakdown
+                        monthCategories.push({
+                            categoryId: category.id,
+                            categoryName: categoryPayment.categoryName,
+                            receivable: categoryPayment.receivable,
+                            received: categoryPayment.received,
+                            pending: pending,
+                            status: categoryPayment.received >= categoryPayment.receivable ? 'paid' : 
+                                   categoryPayment.received > 0 ? 'partial' : 'unpaid',
+                        });
+                        
+                        // Only add to total if there's actually pending
+                        if (pending > 0) {
+                            monthTotalPending += pending;
+                        }
+                    }
+                });
+
+                // Only add this month if there are pending payments
+                if (monthCategories.length > 0 && monthTotalPending > 0) {
+                    // Filter to only show categories with pending > 0
+                    const pendingCategories = monthCategories.filter(cat => cat.pending > 0);
+                    
+                    if (pendingCategories.length > 0) {
                         pendingPayments.push({
                             month: checkMonth,
                             year: checkYear,
                             monthName: this.getMonthName(checkMonth),
-                            pendingAmount: pending,
-                            status: payment.received > 0 ? 'partial' : 'unpaid',
+                            pendingAmount: monthTotalPending,
+                            categories: pendingCategories,
+                            status: pendingCategories.every(c => c.status === 'unpaid') ? 'unpaid' : 'partial',
                         });
                     }
                 }
-
+                
                 // Move to next month
                 checkMonth++;
                 if (checkMonth > 12) {
@@ -748,6 +807,66 @@ export class PaymentModel {
                     checkYear++;
                 }
             }
+
+            // Handle NON-RECURRING categories separately (check only once, not per month)
+            nonRecurringCategories.forEach(category => {
+                // Find all payments for this non-recurring category
+                const categoryPayments = payments.filter(p => p.categoryId === category.id);
+                
+                if (categoryPayments.length === 0) {
+                    // No payment exists - this is a pending one-time fee
+                    const expectedAmount = categoryStandardAmounts.get(category.id) || standardAmount;
+                    
+                    // Add as a separate entry (not tied to a specific month)
+                    pendingPayments.push({
+                        month: 0, // Use 0 to indicate non-recurring
+                        year: currentYear,
+                        monthName: category.name, // Use category name instead of month
+                        pendingAmount: expectedAmount,
+                        categories: [{
+                            categoryId: category.id,
+                            categoryName: category.name,
+                            receivable: expectedAmount,
+                            received: 0,
+                            pending: expectedAmount,
+                            status: 'unpaid',
+                        }],
+                        status: 'unpaid',
+                    });
+                } else {
+                    // Calculate total receivable and received across all payments for this category
+                    let totalReceivable = 0;
+                    let totalReceived = 0;
+                    
+                    categoryPayments.forEach(payment => {
+                        totalReceivable += parseFloat(payment.receivableAmount);
+                        totalReceived += parseFloat(payment.receivedAmount);
+                    });
+                    
+                    const pending = totalReceivable - totalReceived;
+                    
+                    // Only add if there's pending amount
+                    if (pending > 0) {
+                        pendingPayments.push({
+                            month: 0, // Use 0 to indicate non-recurring
+                            year: currentYear,
+                            monthName: category.name, // Use category name instead of month
+                            pendingAmount: pending,
+                            categories: [{
+                                categoryId: category.id,
+                                categoryName: category.name,
+                                receivable: totalReceivable,
+                                received: totalReceived,
+                                pending: pending,
+                                status: totalReceived >= totalReceivable ? 'paid' : 
+                                       totalReceived > 0 ? 'partial' : 'unpaid',
+                            }],
+                            status: totalReceived >= totalReceivable ? 'paid' : 
+                                   totalReceived > 0 ? 'partial' : 'unpaid',
+                        });
+                    }
+                }
+            });
 
             return pendingPayments;
         } catch (error) {

@@ -171,7 +171,7 @@ export class ReportController {
                     sum + parseFloat(payment.received_amount || 0),
                 0
             );
-
+            // console.log("Total Cross Month Payments: ", totalCrossMonthPayments,"monthlybalance: ",monthlyBalance, "monthlyexpenses: ", monthlyExpenses);
             const workbook = new ExcelJS.Workbook();
             const worksheet = workbook.addWorksheet("Monthly Report");
 
@@ -235,9 +235,7 @@ export class ReportController {
             worksheet.getCell("B8").value = parseFloat(totalCrossMonthPayments);
 
             worksheet.getCell("A9").value = "Current Month Balance:";
-            worksheet.getCell("B9").value =
-                parseFloat(monthlyBalance.currentBalance) +
-                parseFloat(totalCrossMonthPayments);
+            worksheet.getCell("B9").value = parseFloat(monthlyBalance.currentBalance);
 
             ["B5", "B6", "B7", "B8", "B9"].forEach((cell) => {
                 worksheet.getCell(cell).numFmt = "#,##0.00";

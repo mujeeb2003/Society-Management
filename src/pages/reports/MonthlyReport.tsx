@@ -291,7 +291,7 @@ export default function MonthlyReport({ onBack }: MonthlyReportProps) {
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                                 <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
                                     <div className="text-sm text-blue-600 font-medium mb-1">
                                         Previous Balance
@@ -311,6 +311,18 @@ export default function MonthlyReport({ onBack }: MonthlyReportProps) {
                                         <TrendingUp className="h-5 w-5 mr-1" />
                                         {formatCurrency(
                                             reportData.summary.totalReceipts
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="bg-indigo-50 p-4 rounded-lg border border-indigo-200">
+                                    <div className="text-sm text-indigo-600 font-medium mb-1">
+                                        Cross Month
+                                    </div>
+                                    <div className="text-2xl font-bold text-indigo-700 flex items-center">
+                                        <Calendar className="h-5 w-5 mr-1" />
+                                        {formatCurrency(
+                                            reportData.summary.crossMonthPayments || 0
                                         )}
                                     </div>
                                 </div>
