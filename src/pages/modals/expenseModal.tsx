@@ -52,7 +52,7 @@ const COMMON_CATEGORIES = [
     "Cleaning",
     "Repairs",
     "Landscaping",
-    "Insurance",
+    "Salary",
     "Office Supplies",
     "Legal Fees",
     "Marketing",

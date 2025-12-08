@@ -225,23 +225,31 @@ export class ReportController {
             worksheet.getCell("B6").value = parseFloat(
                 monthlyBalance.totalReceipts
             );
-            worksheet.getCell("A7").value = "Total Expenses:";
-            worksheet.getCell("B7").value = parseFloat(
+            worksheet.getCell("A7").value = "Amount Received for Pending Months:";
+            worksheet.getCell("B7").value = parseFloat(totalCrossMonthPayments);
+
+            const totalIncome = parseFloat(monthlyBalance.previousBalance) + 
+                              parseFloat(monthlyBalance.totalReceipts) + 
+                              parseFloat(totalCrossMonthPayments);
+
+            worksheet.getCell("A8").value = "Total Available Funds:";
+            worksheet.getCell("B8").value = totalIncome;
+            worksheet.getCell("A8").style = { font: { bold: true } };
+            worksheet.getCell("B8").style = { font: { bold: true } };
+
+            worksheet.getCell("A9").value = "Total Expenses:";
+            worksheet.getCell("B9").value = parseFloat(
                 monthlyBalance.totalExpenses
             );
 
-            worksheet.getCell("A8").value =
-                "Amount Received for Pending Months:";
-            worksheet.getCell("B8").value = parseFloat(totalCrossMonthPayments);
+            worksheet.getCell("A10").value = "Current Month Balance:";
+            worksheet.getCell("B10").value = parseFloat(monthlyBalance.currentBalance);
 
-            worksheet.getCell("A9").value = "Current Month Balance:";
-            worksheet.getCell("B9").value = parseFloat(monthlyBalance.currentBalance);
-
-            ["B5", "B6", "B7", "B8", "B9"].forEach((cell) => {
+            ["B5", "B6", "B7", "B8", "B9", "B10"].forEach((cell) => {
                 worksheet.getCell(cell).numFmt = "#,##0.00";
             });
 
-            let nextSectionRow = 11;
+            let nextSectionRow = 12;
             if (crossMonthPayments.length > 0) {
                 worksheet.mergeCells(`A${nextSectionRow}:H${nextSectionRow}`);
                 worksheet.getCell(`A${nextSectionRow}`).value =
@@ -509,7 +517,7 @@ export class ReportController {
                 "Description",
                 "Amount",
                 "Date",
-                "Notes",
+                "Payment Method",
             ];
             expenseHeaders.forEach((header, index) => {
                 const cell = worksheet.getCell(expenseStartRow + 2, index + 1);
@@ -527,13 +535,13 @@ export class ReportController {
                         expense.amount || expense.total || 0
                     );
                     worksheet.getCell(expenseRow, 4).value =
-                        expense.expense_date
+                        expense.expenseDate
                             ? new Date(
-                                  expense.expense_date
+                                  expense.expenseDate
                               ).toLocaleDateString()
                             : "N/A";
                     worksheet.getCell(expenseRow, 5).value =
-                        expense.notes || "N/A";
+                        expense.paymentMethod || "N/A";
 
                     worksheet.getCell(expenseRow, 3).numFmt = "#,##0.00";
                     expenseRow++;
@@ -2216,7 +2224,7 @@ export class ReportController {
             worksheet.getCell("A7").value = "Total Receivable:";
             worksheet.getCell("B7").value = parseFloat(totalReceivable);
             worksheet.getCell("B7").numFmt = "#,##0.00";
-            worksheet.getCell("A8").value = "Total Received:";
+            worksheet.getCell("A8").value = "Total Received (Partial):";
             worksheet.getCell("B8").value = parseFloat(totalReceived);
             worksheet.getCell("B8").numFmt = "#,##0.00";
 
